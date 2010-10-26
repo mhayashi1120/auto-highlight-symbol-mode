@@ -1,4 +1,4 @@
-auto-highlight-symbol-mode 1.01
+auto-highlight-symbol-mode 1.02
 ===============================
 
 a minor mode for emacs.   automatic highlighting symbol like [eclipse](http://www.eclipse.org) IDE.

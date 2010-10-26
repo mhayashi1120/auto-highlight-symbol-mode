@@ -4,7 +4,7 @@
 ;; Created date 2009-03-03 21:44 +0900
 
 ;; Author: Mitsuo Saito <arch320@NOSPAM.gmail.com>
-;; Version: 1.01
+;; Version: 1.02
 ;; Keywords: face match
 ;; URL: http://github.com/mitsuo-saito/auto-highlight-symbol-mode/raw/master/auto-highlight-symbol.el
 ;; Compatibility: GNU Emacs 23.x 24.x later
@@ -113,7 +113,7 @@
 ;;  `ahs-toggle-search-whole-buffer'
 ;;    toggle auto-highlight-symbol search whole-buffer-mode
 ;;  `ahs-edit-mode'
-;;    turn on edit-mode. if call with prefix-args , enable whole-buffer-mode momentary.
+;;    turn on edit mode. if call with prefix-args , enable whole-buffer-mode momentary.
 ;;  `auto-highlight-symbol-mode'
 ;;    automatic highlighting symbol minor mode
 ;;
@@ -158,14 +158,17 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 28:e6dc4e2f8e1b tip $
+;;   $Revision: 29:5f15716b0652 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Tue, 26 Oct 2010 20:51:38 +0900 $
+;;   $LastModified: Tue, 26 Oct 2010 23:40:59 +0900 $
 ;;
-;;   $Lastlog: add edit mode hook for protect overlay $
+;;   $Lastlog: minor fix $
 ;;
 
 ;;; Changelog
+;;
+;; v1.02 2010-10-26 23:39 +0900
+;;   minor fix
 ;;
 ;; v1.01 2010-10-26 20:50 +0900
 ;;   add edit mode hook for protect overlay
@@ -183,11 +186,12 @@
 (eval-when-compile
   ;; suppress compile error warning
   (require 'easy-mmode)
+  (require 'cl )
+  (unless (fboundp 'auto-complete-mode)
+    (defun auto-complete-mode(arg)))
   (defvar dropdown-list-overlays nil))
 
-(require 'cl ) ;; :D
-
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 28:e6dc4e2f8e1b 2010-10-26 20:51 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 29:5f15716b0652 2010-10-26 23:40 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -452,9 +456,9 @@ has 3 different ways.
       (when (and bounds
                  (not ahs-highlighted)
                  (not (ahs-dropdown-list-p))
-                 (ahs-symbol-p ahs-include symbol)
+                 (not (memq (get-text-property (point) 'face) ahs-inhibit-face-list))
                  (not (ahs-symbol-p ahs-exclude symbol t))
-                 (not (memq (get-text-property (point) 'face) ahs-inhibit-face-list)))
+                 (ahs-symbol-p ahs-include symbol))
         (ahs-highlight symbol start end)))))
 
 ;;
@@ -462,10 +466,10 @@ has 3 different ways.
 ;;
 (defun ahs-symbol-p (predicate symbol &optional nodefs)
   "return value *Non-nil means include/exclude symbol"
-  (cond ((null predicate)
+  (cond ((null predicate) ;; default include/no exclude
          (unless nodefs
            (let ((case-fold-search ahs-case-fold-search))
-             (string-match ahs-default-symbol-regexp symbol)))) ;; default include
+             (string-match ahs-default-symbol-regexp symbol))))
 
         ((stringp predicate) ;; standard-regexp
          (let ((case-fold-search ahs-case-fold-search))
@@ -479,7 +483,7 @@ has 3 different ways.
          (funcall predicate symbol))))
 
 (defun ahs-dropdown-list-p ()
-  "disable highlight when expand dropdown-list"
+  "disable highlighting when expand dropdown-list"
   (and (featurep 'dropdown-list)
        dropdown-list-overlays ))
 
@@ -566,6 +570,12 @@ has 3 different ways.
       (delete-overlay ahs-current-overlay )
       (ahs-highlight-current-symbol beg end))))
 
+(defun ahs-remove-if (predicate candidate)
+  "remove-if :D"
+  (loop for overlay in candidate
+        when (not (funcall predicate overlay))
+        collect overlay))
+
 (defun ahs-forward-predicate  (x y) (< x (overlay-start y)))
 (defun ahs-backward-predicate (x y) (> x (overlay-start y)))
 (defun ahs-defined-predicate  (x)   (eq (overlay-get x 'face) 'ahs-face ))
@@ -594,7 +604,7 @@ has 3 different ways.
                 (delete-char len)))))))))
 
 (defun ahs-edit-post-command-hook-function ()
-  "edit-mode post-command-hook function"
+  "edit mode post-command-hook function"
   (if (or (null (overlay-start ahs-current-overlay))
           (< (point) (overlay-start ahs-current-overlay))
           (> (point) (overlay-end ahs-current-overlay)))
@@ -617,13 +627,13 @@ has 3 different ways.
   "select highlighted symbols forward. only symbol definition."
   (interactive)
   (ahs-select 'ahs-forward-predicate
-              (reverse (remove-if 'ahs-defined-predicate ahs-overlay-list ))))
+              (reverse (ahs-remove-if 'ahs-defined-predicate ahs-overlay-list ))))
 
 (defun ahs-backward-defined ()
   "select highlighted symbols backward. only symbol definition."
   (interactive)
   (ahs-select 'ahs-backward-predicate
-              (remove-if 'ahs-defined-predicate ahs-overlay-list )))
+              (ahs-remove-if 'ahs-defined-predicate ahs-overlay-list )))
 
 (defun ahs-set-idle-interval (secs)
   "set wait until highlighting symbol when emacs is idle."
@@ -660,7 +670,7 @@ nomsg t   suppress mode on-off message"
 ;; (@* "define mode" )
 ;;
 (defun ahs-edit-mode (arg &optional fswb force)
-  "turn on edit-mode. if call with prefix-args , enable whole-buffer-mode momentary."
+  "turn on edit mode. if call with prefix-args , enable whole-buffer-mode momentary."
   (interactive
    (if ahs-edit-mode-enable
        (list nil)
@@ -671,23 +681,20 @@ nomsg t   suppress mode on-off message"
              (not buffer-read-only))
     (if arg
         (progn
-          ;;enable section
           (when fswb
             (let ((ahs-search-whole-buffer t))
               (ahs-remove-all-overlay)
               (ahs-idle-function)))
           (remove-hook 'pre-command-hook 'ahs-unhighlight t )
           (add-hook 'post-command-hook 'ahs-edit-post-command-hook-function nil t )
-          (run-hooks 'ahs-edit-mode-on-hook)
           (setq ahs-edit-mode-enable t )
-          (ahs-set-lighter))
+          (run-hooks 'ahs-edit-mode-on-hook))
       (progn
-        ;; disable section
         (remove-hook 'post-command-hook 'ahs-edit-post-command-hook-function t)
         (ahs-remove-all-overlay)
-        (run-hooks 'ahs-edit-mode-off-hook)
         (setq ahs-edit-mode-enable nil )
-        (ahs-set-lighter)))))
+        (run-hooks 'ahs-edit-mode-off-hook)))
+    (ahs-set-lighter)))
 
 (defun ahs-set-lighter ()
   "set modeline lighter"
@@ -698,7 +705,7 @@ nomsg t   suppress mode on-off message"
   (force-mode-line-update))
 
 (defun ahs-clear ()
-  "clear all highlighted overlay and exit edit mode"
+  "clear all highlighted overlay and exit edit mode."
   (if ahs-edit-mode-enable
       (ahs-edit-mode nil nil t)
     (when ahs-highlighted
@@ -708,7 +715,7 @@ nomsg t   suppress mode on-off message"
   "What buffer `auto-highlight-symbol-mode' prefers."
   (if (and (not (minibufferp (current-buffer)))
            (memq major-mode ahs-modes))
-      (auto-highlight-symbol-mode 1)))
+      (auto-highlight-symbol-mode t)))
 
 ;;;###autoload
 (define-global-minor-mode global-auto-highlight-symbol-mode
@@ -762,6 +769,6 @@ nomsg t   suppress mode on-off message"
 (provide 'auto-highlight-symbol )
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 28:e6dc4e2f8e1b 2010-10-26 20:51 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 29:5f15716b0652 2010-10-26 23:40 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
