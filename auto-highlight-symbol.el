@@ -4,7 +4,7 @@
 ;; Created date 2009-03-03 21:44 +0900
 
 ;; Author: Mitsuo Saito <arch320@NOSPAM.gmail.com>
-;; Version: 1.0
+;; Version: 1.01
 ;; Keywords: face match
 ;; URL: http://github.com/mitsuo-saito/auto-highlight-symbol-mode/raw/master/auto-highlight-symbol.el
 ;; Compatibility: GNU Emacs 23.x 24.x later
@@ -47,7 +47,8 @@
 ;; (@> "edit mode")          edit mode futction
 ;; (@> "interactive")        interactive function
 ;; (@> "define mode")        register minor mode
-;; (@> "revert")             against revert-buffer
+;; (@> "protect overlay")    protect overlay for edit mode
+;; (@> "revert")             protect buffer from auto-revert-mode
 ;;
 
 ;;; (@* "Setup" )
@@ -114,7 +115,7 @@
 ;;  `ahs-edit-mode'
 ;;    turn on edit-mode. if call with prefix-args , enable whole-buffer-mode momentary.
 ;;  `auto-highlight-symbol-mode'
-;;    automatic highlighting symbol minor-mode
+;;    automatic highlighting symbol minor mode
 ;;
 ;;; Customizable Options:
 ;;
@@ -127,19 +128,23 @@
 ;;  `ahs-wmode-lighter'
 ;;    auto-highlight-symbol search whole-buffer-mode lighter
 ;;  `ahs-edit-mode-lighter'
-;;    auto-highlight-symbol edit-mode lighter
+;;    auto-highlight-symbol edit mode lighter
 ;;  `ahs-case-fold-search'
 ;;    *Non-nil means case-fold-search.
 ;;  `ahs-search-whole-buffer'
 ;;    *Non-nil means search whole buffer.
 ;;  `auto-highlight-symbol-mode-hook'
 ;;    hook for `auto-highlight-symbol-mode'.
+;;  `ahs-edit-mode-on-hook'
+;;    Normal hook for run when entering edit mode.
+;;  `ahs-edit-mode-off-hook'
+;;    Normal hook for run when go out edit mode.
 ;;  `ahs-idle-interval'
 ;;    Number of seconds to wait before highlighting symbol.
 ;;  `ahs-inhibit-face-list'
 ;;    face list of inhibit highlighting
 ;;  `ahs-invisible-face-list'
-;;    face list of not highlighting. but can move and turn on edit-mode.
+;;    face list of not highlighting. but can move and turn on edit mode.
 ;;  `ahs-defined-face-list'
 ;;    face list of symbol definition face
 ;;  `ahs-include'
@@ -153,14 +158,17 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 27:cb2585b82c9a tip $
+;;   $Revision: 28:e6dc4e2f8e1b tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Tue, 26 Oct 2010 17:03:15 +0900 $
+;;   $LastModified: Tue, 26 Oct 2010 20:51:38 +0900 $
 ;;
-;;   $Lastlog: typo $
+;;   $Lastlog: add edit mode hook for protect overlay $
 ;;
 
 ;;; Changelog
+;;
+;; v1.01 2010-10-26 20:50 +0900
+;;   add edit mode hook for protect overlay
 ;;
 ;; v1.0  2010-10-26 16:33 +0900
 ;;   first release
@@ -173,13 +181,13 @@
 ;;; Code:
 
 (eval-when-compile
-  ;; suppress compile error-warning
+  ;; suppress compile error warning
   (require 'easy-mmode)
   (defvar dropdown-list-overlays nil))
 
 (require 'cl ) ;; :D
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 27:cb2585b82c9a 2010-10-26 17:03 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 28:e6dc4e2f8e1b 2010-10-26 20:51 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -242,7 +250,7 @@
   :type 'string )
 
 (defcustom ahs-edit-mode-lighter " *HSE*"
-  "auto-highlight-symbol edit-mode lighter"
+  "auto-highlight-symbol edit mode lighter"
   :group 'auto-highlight-symbol
   :type 'string )
 
@@ -259,6 +267,16 @@
 
 (defcustom auto-highlight-symbol-mode-hook nil
   "hook for `auto-highlight-symbol-mode'."
+  :group 'auto-highlight-symbol
+  :type 'hook )
+
+(defcustom ahs-edit-mode-on-hook nil
+  "Normal hook for run when entering edit mode."
+  :group 'auto-highlight-symbol
+  :type 'hook )
+
+(defcustom ahs-edit-mode-off-hook nil
+  "Normal hook for run when go out edit mode."
   :group 'auto-highlight-symbol
   :type 'hook )
 
@@ -302,7 +320,7 @@
     flymake-errline
     flymake-warnline
     )
-  "face list of not highlighting. but can move and turn on edit-mode."
+  "face list of not highlighting. but can move and turn on edit mode."
   :group 'auto-highlight-symbol
   :type  '(list symbol))
 
@@ -394,13 +412,11 @@ has 3 different ways.
 
 (defconst ahs-modification-hook-list '( ahs-modification-hook-function ))
 
-(defvar ahs-ac-active-flag   nil )
 (defvar ahs-current-overlay  nil )
 (defvar ahs-edit-mode-enable nil )
 (defvar ahs-highlighted      nil )
 (defvar ahs-mode-line        nil )
 (defvar ahs-overlay-list     nil )
-(make-variable-buffer-local 'ahs-ac-active-flag   )
 (make-variable-buffer-local 'ahs-current-overlay  )
 (make-variable-buffer-local 'ahs-edit-mode-enable )
 (make-variable-buffer-local 'ahs-highlighted      )
@@ -531,6 +547,7 @@ has 3 different ways.
 ;; (@* "select" )
 ;;
 (defun ahs-select-member (predicate source candidate)
+  "member with predicate"
   (when candidate
     (if (funcall predicate source (car candidate))
         candidate
@@ -619,11 +636,11 @@ has 3 different ways.
 
 optional below
 
-force 0   turn-off search-whole-buffer-mode
-      t   turn-on  search-whole-buffer-mode
+force 0   turn off search whole-buffer-mode
+      t   turn on  search whole-buffer-mode
       nil toggle
 
-nomsg t   suppress mode-on-off message"
+nomsg t   suppress mode on-off message"
   (interactive) ;;
   (ahs-clear)
   (cond ((null force) (setq ahs-search-whole-buffer (not ahs-search-whole-buffer)))
@@ -659,29 +676,16 @@ nomsg t   suppress mode-on-off message"
             (let ((ahs-search-whole-buffer t))
               (ahs-remove-all-overlay)
               (ahs-idle-function)))
-
           (remove-hook 'pre-command-hook 'ahs-unhighlight t )
           (add-hook 'post-command-hook 'ahs-edit-post-command-hook-function nil t )
-
-          (when (featurep 'auto-complete)
-            (setq ahs-ac-active-flag  ;; avoid auto-complete-mode menu
-                  (or ahs-ac-active-flag
-                      (assoc-default 'auto-complete-mode (buffer-local-variables))))
-            (when ahs-ac-active-flag
-              (auto-complete-mode 0)))
-
+          (run-hooks 'ahs-edit-mode-on-hook)
           (setq ahs-edit-mode-enable t )
           (ahs-set-lighter))
       (progn
         ;; disable section
         (remove-hook 'post-command-hook 'ahs-edit-post-command-hook-function t)
         (ahs-remove-all-overlay)
-
-        (when (and (featurep 'auto-complete)
-                   ahs-ac-active-flag)
-          (auto-complete-mode t) ;; recover auto-complete-mode
-          (setq ahs-ac-active-flag nil ))
-
+        (run-hooks 'ahs-edit-mode-off-hook)
         (setq ahs-edit-mode-enable nil )
         (ahs-set-lighter)))))
 
@@ -694,7 +698,7 @@ nomsg t   suppress mode-on-off message"
   (force-mode-line-update))
 
 (defun ahs-clear ()
-  "clear all highlighted overlay and exit edit-mode"
+  "clear all highlighted overlay and exit edit mode"
   (if ahs-edit-mode-enable
       (ahs-edit-mode nil nil t)
     (when ahs-highlighted
@@ -713,7 +717,7 @@ nomsg t   suppress mode-on-off message"
 
 ;;;###autoload
 (define-minor-mode auto-highlight-symbol-mode
-  "automatic highlighting symbol minor-mode"
+  "automatic highlighting symbol minor mode"
   :group 'auto-highlight-symbol
   :lighter ahs-mode-line
   (if auto-highlight-symbol-mode
@@ -723,8 +727,34 @@ nomsg t   suppress mode-on-off message"
     (ahs-clear)))
 
 ;;
+;; (@* "protect overlay" )
+;;
+(defvar ahs-ac-active-flag   nil )
+(make-variable-buffer-local 'ahs-ac-active-flag )
+
+(defun ahs-avoid-auto-complete-menu ()
+  "avoid auto-complete-mode menu for protect overlay"
+  (when (featurep 'auto-complete)
+    (setq ahs-ac-active-flag
+          (or ahs-ac-active-flag
+              (assoc-default 'auto-complete-mode (buffer-local-variables))))
+    (when ahs-ac-active-flag
+      (auto-complete-mode 0))))
+
+(defun ahs-recover-auto-complete ()
+  "recover auto-complete-mode"
+  (when (and (featurep 'auto-complete)
+             ahs-ac-active-flag)
+    (auto-complete-mode t)
+    (setq ahs-ac-active-flag nil )))
+
+(add-hook 'ahs-edit-mode-on-hook  'ahs-avoid-auto-complete-menu )
+(add-hook 'ahs-edit-mode-off-hook 'ahs-recover-auto-complete )
+
+;;
 ;; (@* "revert" )
 ;;
+;; remove overlay and exit edit mode before revert-buffer
 (add-hook 'before-revert-hook 'ahs-clear )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -732,6 +762,6 @@ nomsg t   suppress mode-on-off message"
 (provide 'auto-highlight-symbol )
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 27:cb2585b82c9a 2010-10-26 17:03 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 28:e6dc4e2f8e1b 2010-10-26 20:51 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
