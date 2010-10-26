@@ -18,48 +18,13 @@ Installation
 	wget http://github.com/mitsuo-saito/auto-highlight-symbol-mode/raw/master/auto-highlight-symbol.el
 	emacs -batch -f batch-byte-compile auto-highlight-symbol.el
 
-SetUp
+Usage
 -----
-
-### basic use
 
 in your `.emacs.el`
 
 	(require 'auto-highlight-symbol)
 	(global-auto-highlight-symbol-mode t)
-
-
-### set idle interval
-
-	(require 'auto-highlight-symbol)
-	(ahs-set-idle-interval 1.5 )
-	(global-auto-highlight-symbol-mode t)
-
-or
-
-	M-x ahs-set-idle-interval <RET>
-
-
-### affects whole buffer
-
-all buffer
-
-	(setq-default ahs-search-whole-buffer t )
-
-buffer local (mode decision)	
-
-	(add-hook 'emacs-lisp-mode-hook
-	   (function
-	     (lambda()
-	       (ahs-toggle-search-whole-buffer t t))))
-
-or
-
-	M-x ahs-toggle-search-whole-buffer <RET>
-
-momentary
-
-	C-u C-x C-a
 
 License
 -------
