@@ -18,7 +18,7 @@ Installation
 	wget http://github.com/mitsuo-saito/auto-highlight-symbol-mode/raw/master/auto-highlight-symbol.el
 	emacs -batch -f batch-byte-compile auto-highlight-symbol.el
 
-Usage
+SetUp
 -----
 
 in your `.emacs.el`
