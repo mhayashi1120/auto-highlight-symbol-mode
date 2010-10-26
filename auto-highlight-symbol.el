@@ -158,9 +158,9 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 29:5f15716b0652 tip $
+;;   $Revision: 30:c2a009089d47 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Tue, 26 Oct 2010 23:40:59 +0900 $
+;;   $LastModified: Wed, 27 Oct 2010 07:52:17 +0900 $
 ;;
 ;;   $Lastlog: minor fix $
 ;;
@@ -191,7 +191,7 @@
     (defun auto-complete-mode(arg)))
   (defvar dropdown-list-overlays nil))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 29:5f15716b0652 2010-10-26 23:40 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 30:c2a009089d47 2010-10-27 07:52 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -573,12 +573,12 @@ has 3 different ways.
 (defun ahs-remove-if (predicate candidate)
   "remove-if :D"
   (loop for overlay in candidate
-        when (not (funcall predicate overlay))
+        when (funcall predicate overlay)
         collect overlay))
 
 (defun ahs-forward-predicate  (x y) (< x (overlay-start y)))
 (defun ahs-backward-predicate (x y) (> x (overlay-start y)))
-(defun ahs-defined-predicate  (x)   (eq (overlay-get x 'face) 'ahs-face ))
+(defun ahs-defined-predicate  (x)   (eq (overlay-get x 'face) 'ahs-defined-face ))
 
 ;;
 ;; (@* "edit mode" )
@@ -769,6 +769,6 @@ nomsg t   suppress mode on-off message"
 (provide 'auto-highlight-symbol )
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 29:5f15716b0652 2010-10-26 23:40 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 30:c2a009089d47 2010-10-27 07:52 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
