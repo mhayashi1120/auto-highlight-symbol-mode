@@ -4,7 +4,7 @@
 ;; Created date 2009-03-03 21:44 +0900
 
 ;; Author: Mitsuo Saito <arch320@NOSPAM.gmail.com>
-;; Version: 1.02
+;; Version: 1.03
 ;; Keywords: face match
 ;; URL: http://github.com/mitsuo-saito/auto-highlight-symbol-mode/raw/master/auto-highlight-symbol.el
 ;; Compatibility: GNU Emacs 23.x 24.x later
@@ -158,14 +158,17 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 30:c2a009089d47 tip $
+;;   $Revision: 31:3a89fa87fdf0 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Wed, 27 Oct 2010 07:52:17 +0900 $
+;;   $LastModified: Thu, 28 Oct 2010 07:01:52 +0900 $
 ;;
-;;   $Lastlog: minor fix $
+;;   $Lastlog: bug fix $
 ;;
 
 ;;; Changelog
+;;
+;; v1.03 2010-10-28 07:00 +0900
+;;   bug fix
 ;;
 ;; v1.02 2010-10-26 23:39 +0900
 ;;   minor fix
@@ -191,7 +194,7 @@
     (defun auto-complete-mode(arg)))
   (defvar dropdown-list-overlays nil))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 30:c2a009089d47 2010-10-27 07:52 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 31:3a89fa87fdf0 2010-10-28 07:01 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -456,7 +459,7 @@ has 3 different ways.
       (when (and bounds
                  (not ahs-highlighted)
                  (not (ahs-dropdown-list-p))
-                 (not (memq (get-text-property (point) 'face) ahs-inhibit-face-list))
+                 (not (memq (get-char-property (point) 'face) ahs-inhibit-face-list))
                  (not (ahs-symbol-p ahs-exclude symbol t))
                  (ahs-symbol-p ahs-include symbol))
         (ahs-highlight symbol start end)))))
@@ -769,6 +772,6 @@ nomsg t   suppress mode on-off message"
 (provide 'auto-highlight-symbol )
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 30:c2a009089d47 2010-10-27 07:52 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 31:3a89fa87fdf0 2010-10-28 07:01 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
