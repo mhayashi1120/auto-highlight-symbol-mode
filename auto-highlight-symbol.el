@@ -43,7 +43,7 @@
 ;; (@> "Timer")              timer function
 ;; (@> "Idle")               idle function
 ;; (@> "Range plugin")       range plugin section
-;; (@> "Builtin plugin")     builtin plugin section
+;; (@> "Built-in plugin")    built-in plugin section
 ;; (@> "Highlight")          highlight function
 ;; (@> "Select")             selective function
 ;; (@> "Edit mode")          edit mode futction
@@ -158,11 +158,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 41:19eaaab1b8e6 tip $
+;;   $Revision: 43:1aba587cc3cb tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sat, 30 Oct 2010 02:32:08 +0900 $
+;;   $LastModified: Sat, 30 Oct 2010 02:44:59 +0900 $
 ;;
-;;   $Lastlog: ver1.5 release $
+;;   $Lastlog: typo indent change $
 ;;
 
 ;;; Changelog
@@ -202,7 +202,7 @@
     (defun auto-complete-mode(arg)))
   (defvar dropdown-list-overlays nil))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 41:19eaaab1b8e6 2010-10-30 02:32 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 43:1aba587cc3cb 2010-10-30 02:44 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -521,43 +521,46 @@ has 3 different ways.
   (ahs-get-plugin-prop prop ahs-current-range))
 
 ;;
-;; (@* "Builtin plugin" )
+;; (@* "Built-in plugin" )
 ;;
-(ahs-regist-range-plugin display
-                         '((name    . "display area")
-                           (lighter . " HS")
-                           (start   . window-start)
-                           (end     . window-end))
-                         "Display area")
+(ahs-regist-range-plugin
+ display
+ '((name    . "display area")
+   (lighter . " HS")
+   (start   . window-start)
+   (end     . window-end))
+ "Display area")
 
-(ahs-regist-range-plugin whole-buffer
-                         '((name    . "whole buffer")
-                           (lighter . " HSA")
-                           (start   . point-min)
-                           (end     . point-max))
-                         "Whole buffer")
+(ahs-regist-range-plugin
+ whole-buffer
+ '((name    . "whole buffer")
+   (lighter . " HSA")
+   (start   . point-min)
+   (end     . point-max))
+ "Whole buffer")
 
 (defvar ahs-range-bod-start nil)
 (defvar ahs-range-bod-end nil)
 
-(ahs-regist-range-plugin beginning-of-defun
-                         '((name          . "beginning-of-defun")
-                           (lighter       . " HSD")
-                           (major-mode    . (emacs-lisp-mode lisp-interaction-mode c++-mode c-mode))
-                           (before-search . (lambda()
-                                              (save-excursion
-                                                (let ((opoint (point)))
-                                                  (beginning-of-defun)
-                                                  (setq ahs-range-bod-start (point))
-                                                  (end-of-defun)
-                                                  (setq ahs-range-bod-end (point))
-                                                  (when (> opoint ahs-range-bod-end)
-                                                    (setq ahs-range-bod-start ahs-range-bod-end)
-                                                    (beginning-of-defun -1)
-                                                    (setq ahs-range-bod-end (point)))))))
-                           (start         . ahs-range-bod-start)
-                           (end           . ahs-range-bod-end))
-                         "beginning-of-defun to end-of-defun like C-x n d (narrow-to-defun)")
+(ahs-regist-range-plugin
+ beginning-of-defun
+ '((name          . "beginning-of-defun")
+   (lighter       . " HSD")
+   (major-mode    . (emacs-lisp-mode lisp-interaction-mode c++-mode c-mode))
+   (before-search . (lambda()
+                      (save-excursion
+                        (let ((opoint (point)))
+                          (beginning-of-defun)
+                          (setq ahs-range-bod-start (point))
+                          (end-of-defun)
+                          (setq ahs-range-bod-end (point))
+                          (when (> opoint ahs-range-bod-end)
+                            (setq ahs-range-bod-start ahs-range-bod-end)
+                            (beginning-of-defun -1)
+                            (setq ahs-range-bod-end (point)))))))
+   (start         . ahs-range-bod-start)
+   (end           . ahs-range-bod-end))
+ "beginning-of-defun to end-of-defun like C-x n d (narrow-to-defun)")
 
 ;;
 ;; (@* "Highlight" )
@@ -882,6 +885,6 @@ has 3 different ways.
 (provide 'auto-highlight-symbol)
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 41:19eaaab1b8e6 2010-10-30 02:32 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 43:1aba587cc3cb 2010-10-30 02:44 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
