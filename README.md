@@ -1,7 +1,12 @@
-auto-highlight-symbol-mode 1.03
-===============================
+auto-highlight-symbol-mode 1.5
+==============================
 
 a minor mode for emacs.   automatic highlighting current symbol like [eclipse](http://www.eclipse.org) IDE.
+
+What's New in 1.5
+-----------------
+
+### Range Plugin Available
 
 ScreenCast
 ----------
@@ -25,6 +30,16 @@ in your `.emacs.el`
 
 	(require 'auto-highlight-symbol)
 	(global-auto-highlight-symbol-mode t)
+
+Writing Plugin
+--------------
+
+    (ahs-regist-range-plugin whole-buffer
+        '((name    . "whole buffer")
+          (lighter . " HSA")
+          (start   . point-min)
+          (end     . point-max))
+      "Whole buffer")
 
 License
 -------
