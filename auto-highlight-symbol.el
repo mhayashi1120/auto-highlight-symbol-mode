@@ -158,11 +158,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 43:1aba587cc3cb tip $
+;;   $Revision: 44:e01054607338 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sat, 30 Oct 2010 02:44:59 +0900 $
+;;   $LastModified: Sat, 30 Oct 2010 08:29:00 +0900 $
 ;;
-;;   $Lastlog: typo indent change $
+;;   $Lastlog: typo $
 ;;
 
 ;;; Changelog
@@ -202,7 +202,7 @@
     (defun auto-complete-mode(arg)))
   (defvar dropdown-list-overlays nil))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 43:1aba587cc3cb 2010-10-30 02:44 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 44:e01054607338 2010-10-30 08:29 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -760,7 +760,7 @@ has 3 different ways.
     (if range
         (if (memq range available)
             (ahs-change-range-internal range)
-          (setq error (format "`%s' incorrect major-mode or condition property is nil. no thing to change."
+          (setq error (format "`%s' incorrect major-mode or condition property is nil. nothing to change."
                               (ahs-get-plugin-prop 'name (symbol-value range)))))
       (ahs-change-range-internal (if next next
                                    (car available))))
@@ -885,6 +885,6 @@ has 3 different ways.
 (provide 'auto-highlight-symbol)
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 43:1aba587cc3cb 2010-10-30 02:44 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 44:e01054607338 2010-10-30 08:29 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here

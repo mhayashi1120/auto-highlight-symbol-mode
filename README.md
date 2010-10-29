@@ -31,6 +31,9 @@ in your `.emacs.el`
 	(require 'auto-highlight-symbol)
 	(global-auto-highlight-symbol-mode t)
 
+Basic Usage
+-----------
+
 Writing Plugin
 --------------
 
