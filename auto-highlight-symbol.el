@@ -158,11 +158,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 52:c863bac49cdb tip $
+;;   $Revision: 53:28d701e0eb67 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sat, 30 Oct 2010 15:33:10 +0900 $
+;;   $LastModified: Sat, 30 Oct 2010 16:50:03 +0900 $
 ;;
-;;   $Lastlog: cosmetics $
+;;   $Lastlog: minor fix $
 ;;
 
 ;;; Changelog
@@ -205,7 +205,7 @@
     (defun auto-complete-mode(arg)))
   (defvar dropdown-list-overlays nil))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 52:c863bac49cdb 2010-10-30 15:33 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 53:28d701e0eb67 2010-10-30 16:50 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -742,8 +742,7 @@ has 3 different ways.
 (defun ahs-change-range-internal (plugin)
   "Internal function of ahs-change-range"
   (setq ahs-current-range (symbol-value plugin))
-  (ahs-current-plugin-prop 'init)
-  (ahs-set-lighter))
+  (ahs-current-plugin-prop 'init))
 
 (defun ahs-change-range (&optional range nomsg)
   "Change range according to plugin's definition."
@@ -773,7 +772,8 @@ has 3 different ways.
     (unless nomsg
       (if error
           (message error)
-        (message "changed to `%s'." (ahs-current-plugin-prop 'name))))))
+        (message "changed to `%s'." (ahs-current-plugin-prop 'name))))
+    (ahs-set-lighter)))
 
 (defun ahs-toggle-search-whole-buffer (&optional force nomsg)
   "obsolete. please use ahs-change-range instead."
@@ -824,6 +824,7 @@ has 3 different ways.
   "Initialize"
   (unless ahs-current-range
     (ahs-change-range-internal ahs-default-range))
+  (ahs-set-lighter)
   (ahs-start-timer))
 
 (defun ahs-clear ()
@@ -889,6 +890,6 @@ has 3 different ways.
 (provide 'auto-highlight-symbol)
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 52:c863bac49cdb 2010-10-30 15:33 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 53:28d701e0eb67 2010-10-30 16:50 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
