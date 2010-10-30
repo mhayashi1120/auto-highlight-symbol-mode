@@ -48,11 +48,11 @@ Writing Plugin
 
 ### Plugin definition
 
-use ahs-regist-range-plugin macro.
+If you want to define plugin, please use this macro
 
 	(ahs-regist-range-plugin PLUGIN-NAME BODY &optional DOCSTRING)
 
-### Minimum requirement properties
+### Requirement properties
 
 * `name` -- plugin name. must be string.
 * `lighter` -- mode line lighter.
@@ -71,10 +71,10 @@ ex. built-in whole buffer plugin
 
 ### Other properties
 
-* `init` --         
-* `condition` --
-* `major-mode` --    
-* `before-search` --
+* `init` -- executed when the plugin is selected.       
+* `condition` -- 
+* `major-mode` -- specify the major mode can be selected plug-in    
+* `before-search` -- executed when before-search
 
 License
 -------
