@@ -1,5 +1,5 @@
-auto-highlight-symbol-mode 1.5
-==============================
+auto-highlight-symbol-mode 1.51
+===============================
 
 a minor mode for emacs.   automatic highlighting current symbol like [eclipse](http://www.eclipse.org) IDE.
 
@@ -8,11 +8,13 @@ What's New in 1.5
 
 ### Range Plugin Available
 
+3 built-in plugins available
+
 * display area
 * whole buffer
 * current function(begnning-of-defun)
 
-3 plugin available
+you can change `M-x ahs-change-range <RET> or C-x C-'`
 
 ScreenCast
 ----------
@@ -45,10 +47,11 @@ Writing Plugin
 
 minimum requirement
 
-* name    plugin name. must be string.
-* lighter mode line lighter.
-* start   symbol search start point. 
-* end     symbol search end point(BOUND).
+* `name`    plugin name. must be string.
+* `lighter` mode line lighter.
+* `start`   symbol search start point. 
+* `end`     symbol search end point(BOUND).
+
 
     (ahs-regist-range-plugin whole-buffer
         '((name    . "whole buffer")
@@ -59,10 +62,10 @@ minimum requirement
 
 available properties
 
-* init          
-* condition
-* major-mode     
-* before-search
+* `init`          
+* `condition`
+* `major-mode`     
+* `before-search`
 
 License
 -------

@@ -4,7 +4,7 @@
 ;; Created date 2009-03-03 21:44 +0900
 
 ;; Author: Mitsuo Saito <arch320@NOSPAM.gmail.com>
-;; Version: 1.5
+;; Version: 1.51
 ;; Keywords: face match
 ;; URL: http://github.com/mitsuo-saito/auto-highlight-symbol-mode/raw/master/auto-highlight-symbol.el
 ;; Compatibility: GNU Emacs 23.x 24.x later
@@ -158,11 +158,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 47:9c6b067557c3 tip $
+;;   $Revision: 48:eca56e047e0d tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sat, 30 Oct 2010 09:19:00 +0900 $
+;;   $LastModified: Sat, 30 Oct 2010 09:31:21 +0900 $
 ;;
-;;   $Lastlog: plugin minor change $
+;;   $Lastlog: typo $
 ;;
 
 ;;; Changelog
@@ -205,7 +205,7 @@
     (defun auto-complete-mode(arg)))
   (defvar dropdown-list-overlays nil))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 47:9c6b067557c3 2010-10-30 09:19 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 48:eca56e047e0d 2010-10-30 09:31 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -890,6 +890,6 @@ has 3 different ways.
 (provide 'auto-highlight-symbol)
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 47:9c6b067557c3 2010-10-30 09:19 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 48:eca56e047e0d 2010-10-30 09:31 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
