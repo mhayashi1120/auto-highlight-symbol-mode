@@ -8,6 +8,8 @@ What's New in 1.5
 
 ### Range Plugin Available
 
+Search range is determined by plugin.
+
 3 built-in plugins available
 
 * display area
@@ -40,19 +42,24 @@ in your `.emacs.el`
 	(global-auto-highlight-symbol-mode t)
 
 that's all.
-now highligting symbol you can see.
 
 Writing Plugin
 --------------
 
-minimum requirement
+### plugin definition
+
+use ahs-regist-range-plugin macro
+
+	(ahs-regist-range-plugin PLUGIN-NAME BODY &optional DOCSTRING)
+
+### minimum requirement properties
 
 * `name` -- plugin name. must be string.
 * `lighter` -- mode line lighter.
 * `start` -- symbol search start point. 
 * `end` -- symbol search end point(BOUND).
 
-built-in whole buffer
+ex. built-in whole buffer plugin
 
     (ahs-regist-range-plugin whole-buffer
         '((name    . "whole buffer")
@@ -61,7 +68,7 @@ built-in whole buffer
           (end     . point-max))
       "Whole buffer")
 
-available properties
+### other available properties
 
 * `init` --         
 * `condition` --

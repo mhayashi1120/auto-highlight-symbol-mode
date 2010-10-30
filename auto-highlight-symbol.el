@@ -31,26 +31,26 @@
 ;; if you have `linkd.el' turn on `linkd-mode'
 ;; and (setq linkd-use-icons t ) more easily navigation.
 ;;
-;; (@> "Setup")              basic setup
-;; (@> "ScreenCast")         petit screencast
-;; (@> "Setting")            some setting example
-;; (@> "Mode map")           key binding
+;; (@> "Setup")              Basic setup
+;; (@> "ScreenCast")         Screencast
+;; (@> "Setting")            Setting example
+;; (@> "Mode map")           Key binding
 ;;
-;; (@> "Custom variable")    customizable varible
-;; (@> "Face")               use face in auto-highlight-symbol-mode
-;; (@> "Regular expression") symbol include & exclude regular expression
-;; (@> "Internal variable")  internal variables
-;; (@> "Timer")              timer function
-;; (@> "Idle")               idle function
-;; (@> "Range plugin")       range plugin section
-;; (@> "Built-in plugin")    built-in plugin section
-;; (@> "Highlight")          highlight function
-;; (@> "Select")             selective function
-;; (@> "Edit mode")          edit mode futction
-;; (@> "Interactive")        interactive function
-;; (@> "Define mode")        register minor mode
-;; (@> "Protect overlay")    protect overlay for edit mode
-;; (@> "Revert")             protect buffer from auto-revert-mode
+;; (@> "Custom variable")    Customizable varible
+;; (@> "Face")               Face used in auto-highlight-symbol-mode
+;; (@> "Regular expression") Symbol include & exclude regular expression
+;; (@> "Internal variable")  Internal variables
+;; (@> "Timer")              Timer function
+;; (@> "Idle")               Idle function
+;; (@> "Range plugin")       Range plugin section
+;; (@> "Built-in plugin")    Built-in plugin section
+;; (@> "Highlight")          Highlight function
+;; (@> "Select")             Selective function
+;; (@> "Edit mode")          Edit mode futction
+;; (@> "Interactive")        Interactive function
+;; (@> "Define mode")        Register minor mode
+;; (@> "Protect overlay")    Protect overlay for edit mode
+;; (@> "Revert")             Protect from revert-buffer
 ;;
 
 ;;; (@* "Setup" )
@@ -64,7 +64,7 @@
 ;;
 ;;; (@* "ScreenCast" )
 ;;
-;;  petit screencast available on YouTube and ScreenToaster
+;;  screencast available on YouTube and ScreenToaster
 ;;  http://www.youtube.com/watch?v=xzJ2r4-s7fo
 ;;  http://www.screentoaster.com/watch/stUE9VQ0dMRFtXRlVeU19cX1Bd/auto_highlight_symbol_mode_screencast
 ;;
@@ -158,11 +158,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 48:eca56e047e0d tip $
+;;   $Revision: 50:d5ebb95369bc tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sat, 30 Oct 2010 09:31:21 +0900 $
+;;   $LastModified: Sat, 30 Oct 2010 10:33:37 +0900 $
 ;;
-;;   $Lastlog: typo $
+;;   $Lastlog: doc update $
 ;;
 
 ;;; Changelog
@@ -205,7 +205,7 @@
     (defun auto-complete-mode(arg)))
   (defvar dropdown-list-overlays nil))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 48:eca56e047e0d 2010-10-30 09:31 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 50:d5ebb95369bc 2010-10-30 10:33 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -890,6 +890,6 @@ has 3 different ways.
 (provide 'auto-highlight-symbol)
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 48:eca56e047e0d 2010-10-30 09:31 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 50:d5ebb95369bc 2010-10-30 10:33 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
