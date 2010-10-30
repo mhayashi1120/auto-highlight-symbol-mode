@@ -52,8 +52,6 @@ If you want to define the plugin, please use this macro.
 
 	(ahs-regist-range-plugin PLUGIN-NAME BODY &optional DOCSTRING)
 
-### Plugin properties
-
 ### Requirement properties
 
 The following properties are required
@@ -63,8 +61,8 @@ The following properties are required
 * `start` -- symbol search start point.
 * `end` -- symbol search end point(BOUND).
 
-return value of `name`,`lighter` must be a string.
-return value of `start`,`end` must be a number.
+* return value of `name`,`lighter` must be a string.
+* return value of `start`,`end` must be a number.
 
 ex. built-in whole buffer plugin
 
