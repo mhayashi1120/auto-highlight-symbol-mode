@@ -52,12 +52,19 @@ If you want to define the plugin, please use this macro.
 
 	(ahs-regist-range-plugin PLUGIN-NAME BODY &optional DOCSTRING)
 
+### Plugin properties
+
 ### Requirement properties
 
-* `name` -- plugin name. must be string.
+The following properties are required
+
+* `name` -- plugin name.
 * `lighter` -- mode line lighter.
 * `start` -- symbol search start point.
 * `end` -- symbol search end point(BOUND).
+
+return value of `name`,`lighter` must be a string.
+return value of `start`,`end` must be a number.
 
 ex. built-in whole buffer plugin
 
@@ -74,7 +81,7 @@ ex. built-in whole buffer plugin
 * `init` -- executed when the plugin is selected.
 * `condition` -- conditions can be selected plug-in.
 * `major-mode` -- specify the major mode can be selected plug-in.
-* `before-search` -- executed when before-search.
+* `before-search` -- executed when before symbol search.
 
 License
 -------
