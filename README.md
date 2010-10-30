@@ -48,7 +48,7 @@ Writing Plugin
 
 ### Plugin definition
 
-If you want to define plugin, please use this macro
+If you want to define the plugin, please use this macro.
 
 	(ahs-regist-range-plugin PLUGIN-NAME BODY &optional DOCSTRING)
 
@@ -56,12 +56,12 @@ If you want to define plugin, please use this macro
 
 * `name` -- plugin name. must be string.
 * `lighter` -- mode line lighter.
-* `start` -- symbol search start point. 
+* `start` -- symbol search start point.
 * `end` -- symbol search end point(BOUND).
 
 ex. built-in whole buffer plugin
 
-    (ahs-regist-range-plugin 
+    (ahs-regist-range-plugin
 		whole-buffer
         '((name    . "whole buffer")
           (lighter . " HSA")
@@ -71,10 +71,10 @@ ex. built-in whole buffer plugin
 
 ### Other properties
 
-* `init` -- executed when the plugin is selected.       
-* `condition` -- 
-* `major-mode` -- specify the major mode can be selected plug-in    
-* `before-search` -- executed when before-search
+* `init` -- executed when the plugin is selected.
+* `condition` -- conditions can be selected plug-in.
+* `major-mode` -- specify the major mode can be selected plug-in.
+* `before-search` -- executed when before-search.
 
 License
 -------
