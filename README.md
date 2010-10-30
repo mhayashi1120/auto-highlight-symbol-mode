@@ -1,7 +1,7 @@
 auto-highlight-symbol-mode 1.51
 ===============================
 
-a minor mode for emacs.   automatic highlighting current symbol like [eclipse](http://www.eclipse.org) IDE.
+A minor mode for emacs.   Automatic highlighting current symbol like [eclipse](http://www.eclipse.org) IDE.
 
 What's New in 1.5
 -----------------
@@ -10,18 +10,18 @@ What's New in 1.5
 
 Search range is determined by plugin.
 
-3 built-in plugins available
+3 built-in plugins available.
 
 * display area
 * whole buffer
 * current function(begnning-of-defun)
 
-you can change `M-x ahs-change-range <RET>` or `C-x C-'`
+You can change `M-x ahs-change-range <RET>` or `C-x C-'`
 
 ScreenCast
 ----------
 
-available on YouTube and ScreenToaster
+Available on YouTube and ScreenToaster.
 
 * YouTube -- [http://www.youtube.com/watch?v=xzJ2r4-s7fo](http://www.youtube.com/watch?v=xzJ2r4-s7fo)
 * ScreenToaster -- [http://www.screentoaster.com/watch/stUE9VQ0dMRFtXRlVeU19cX1Bd/auto_highlight_symbol_mode_screencast](http://www.screentoaster.com/watch/stUE9VQ0dMRFtXRlVeU19cX1Bd/auto_highlight_symbol_mode_screencast)
@@ -46,13 +46,13 @@ that's all.
 Writing Plugin
 --------------
 
-### plugin definition
+### Plugin definition
 
-use ahs-regist-range-plugin macro
+use ahs-regist-range-plugin macro.
 
 	(ahs-regist-range-plugin PLUGIN-NAME BODY &optional DOCSTRING)
 
-### minimum requirement properties
+### Minimum requirement properties
 
 * `name` -- plugin name. must be string.
 * `lighter` -- mode line lighter.
@@ -61,14 +61,15 @@ use ahs-regist-range-plugin macro
 
 ex. built-in whole buffer plugin
 
-    (ahs-regist-range-plugin whole-buffer
+    (ahs-regist-range-plugin 
+		whole-buffer
         '((name    . "whole buffer")
           (lighter . " HSA")
           (start   . point-min)
           (end     . point-max))
       "Whole buffer")
 
-### other available properties
+### Other properties
 
 * `init` --         
 * `condition` --
