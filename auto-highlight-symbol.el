@@ -117,7 +117,7 @@
 ;;  `ahs-toggle-search-whole-buffer'
 ;;    obsolete. please use ahs-change-range instead.
 ;;  `ahs-edit-mode'
-;;    Turn on edit mode. if call with prefix-args , current range change to whole buffer momentary.
+;;    Turn on edit mode. if call with prefix-args , current range change to `whole buffer' momentary.
 ;;  `auto-highlight-symbol-mode'
 ;;    Automatic highlighting current symbol minor mode
 ;;
@@ -158,14 +158,17 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 44:e01054607338 tip $
+;;   $Revision: 47:9c6b067557c3 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sat, 30 Oct 2010 08:29:00 +0900 $
+;;   $LastModified: Sat, 30 Oct 2010 09:19:00 +0900 $
 ;;
-;;   $Lastlog: typo $
+;;   $Lastlog: plugin minor change $
 ;;
 
 ;;; Changelog
+;;
+;; v1.51 2010-10-30 09:17 +0900
+;;   plugin minor change
 ;;
 ;; v1.5  2010-10-30 02:31 +0900
 ;;   add range plugin
@@ -202,7 +205,7 @@
     (defun auto-complete-mode(arg)))
   (defvar dropdown-list-overlays nil))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 44:e01054607338 2010-10-30 08:29 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 47:9c6b067557c3 2010-10-30 09:19 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -499,26 +502,28 @@ has 3 different ways.
            err (ahs-get-plugin-prop 'name plugin) prop) ;; infinite loop? if 'name is badly function
   (message " ")
   (ahs-change-range ahs-default-range t)
-  (message "Plugin error occurred. see *Messages*. changed to `%s' range."
+  (message "Plugin error occurred. see *Messages*. current range has been changed to `%s'."
            (ahs-current-plugin-prop 'name)))
 
-(defun ahs-get-plugin-prop (prop plugin)
+(defun ahs-get-plugin-prop (prop plugin &optional arg)
   "Get property value from plugin"
   (let ((p (cdr (assoc prop plugin))))
     (cond ((and (functionp p)
                 (equal prop 'major-mode)) p)
           ((functionp p)
            (condition-case err
-               (funcall p)
+               (if arg
+                   (funcall p arg)
+                 (funcall p))
              (error err (ahs-plugin-error-message err plugin prop))))
           ((null p) 'none)
           ((symbolp p) (ignore-errors
                          (symbol-value p)))
           (t p))))
 
-(defun ahs-current-plugin-prop (prop)
+(defun ahs-current-plugin-prop (prop &optional arg)
   "Get property value from current range plugin"
-  (ahs-get-plugin-prop prop ahs-current-range))
+  (ahs-get-plugin-prop prop ahs-current-range arg))
 
 ;;
 ;; (@* "Built-in plugin" )
@@ -547,7 +552,7 @@ has 3 different ways.
  '((name          . "beginning-of-defun")
    (lighter       . " HSD")
    (major-mode    . (emacs-lisp-mode lisp-interaction-mode c++-mode c-mode))
-   (before-search . (lambda()
+   (before-search . (lambda(x)
                       (save-excursion
                         (let ((opoint (point)))
                           (beginning-of-defun)
@@ -591,7 +596,7 @@ has 3 different ways.
 (defun ahs-highlight (symbol start end)
   "Highlight"
   (save-excursion
-    (ahs-current-plugin-prop 'before-search)
+    (ahs-current-plugin-prop 'before-search symbol)
     (let ((case-fold-search ahs-case-fold-search)
           (range-start (ahs-current-plugin-prop 'start))
           (range-end (ahs-current-plugin-prop 'end)))
@@ -767,7 +772,7 @@ has 3 different ways.
     (unless nomsg
       (if error
           (message error)
-        (message "changed to `%s' range." (ahs-current-plugin-prop 'name)))))
+        (message "changed to `%s'." (ahs-current-plugin-prop 'name)))))
   (ahs-set-lighter))
 
 (defun ahs-toggle-search-whole-buffer (&optional force nomsg)
@@ -783,7 +788,7 @@ has 3 different ways.
 ;; (@* "Define mode" )
 ;;
 (defun ahs-edit-mode (arg &optional momentary force-off)
-  "Turn on edit mode. if call with prefix-args , current range change to whole buffer momentary."
+  "Turn on edit mode. if call with prefix-args , current range change to `whole buffer' momentary."
   (interactive
    (if ahs-edit-mode-enable
        (list nil)
@@ -885,6 +890,6 @@ has 3 different ways.
 (provide 'auto-highlight-symbol)
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 44:e01054607338 2010-10-30 08:29 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 47:9c6b067557c3 2010-10-30 09:19 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here

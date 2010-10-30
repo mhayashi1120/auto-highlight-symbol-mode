@@ -8,6 +8,12 @@ What's New in 1.5
 
 ### Range Plugin Available
 
+* display area
+* whole buffer
+* current function(begnning-of-defun)
+
+3 plugin available
+
 ScreenCast
 ----------
 
@@ -23,19 +29,26 @@ Installation
 	wget http://github.com/mitsuo-saito/auto-highlight-symbol-mode/raw/master/auto-highlight-symbol.el
 	emacs -batch -f batch-byte-compile auto-highlight-symbol.el
 
-SetUp
------
+Basic SetUp
+-----------
 
 in your `.emacs.el`
 
 	(require 'auto-highlight-symbol)
 	(global-auto-highlight-symbol-mode t)
 
-Basic Usage
------------
+that's all.
+now highligting symbol you can see.
 
 Writing Plugin
 --------------
+
+minimum requirement
+
+* name    plugin name. must be string.
+* lighter mode line lighter.
+* start   symbol search start point. 
+* end     symbol search end point(BOUND).
 
     (ahs-regist-range-plugin whole-buffer
         '((name    . "whole buffer")
@@ -43,6 +56,13 @@ Writing Plugin
           (start   . point-min)
           (end     . point-max))
       "Whole buffer")
+
+available properties
+
+* init          
+* condition
+* major-mode     
+* before-search
 
 License
 -------
