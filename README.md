@@ -14,7 +14,7 @@ What's New in 1.5
 * whole buffer
 * current function(begnning-of-defun)
 
-you can change `M-x ahs-change-range <RET> or C-x C-'`
+you can change `M-x ahs-change-range <RET>` or `C-x C-'`
 
 ScreenCast
 ----------
@@ -47,11 +47,12 @@ Writing Plugin
 
 minimum requirement
 
-* `name`    plugin name. must be string.
-* `lighter` mode line lighter.
-* `start`   symbol search start point. 
-* `end`     symbol search end point(BOUND).
+* `name` -- plugin name. must be string.
+* `lighter` -- mode line lighter.
+* `start` -- symbol search start point. 
+* `end` -- symbol search end point(BOUND).
 
+built-in whole buffer
 
     (ahs-regist-range-plugin whole-buffer
         '((name    . "whole buffer")
@@ -62,10 +63,10 @@ minimum requirement
 
 available properties
 
-* `init`          
-* `condition`
-* `major-mode`     
-* `before-search`
+* `init` --         
+* `condition` --
+* `major-mode` --    
+* `before-search` --
 
 License
 -------
