@@ -38,11 +38,11 @@
 ;;
 ;; (@> "Custom variable")    Customizable varible
 ;; (@> "Face")               Face used in auto-highlight-symbol-mode
-;; (@> "Regular expression") Symbol include & exclude regular expression
+;; (@> "Regular expression") Symbol include/exclude regular expression
 ;; (@> "Internal variable")  Internal variables
 ;; (@> "Timer")              Timer function
 ;; (@> "Idle")               Idle function
-;; (@> "Range plugin")       Range plugin section
+;; (@> "Range plugin")       Range plugin function
 ;; (@> "Built-in plugin")    Built-in plugin section
 ;; (@> "Highlight")          Highlight function
 ;; (@> "Select")             Selective function
@@ -113,7 +113,7 @@
 ;;  `ahs-set-idle-interval'
 ;;    Set wait until highlighting symbol when emacs is idle.
 ;;  `ahs-change-range'
-;;    Change range according to major-mode
+;;    Change range according to plugin's definition.
 ;;  `ahs-toggle-search-whole-buffer'
 ;;    obsolete. please use ahs-change-range instead.
 ;;  `ahs-edit-mode'
@@ -158,9 +158,9 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 50:d5ebb95369bc tip $
+;;   $Revision: 51:054aa57fc204 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sat, 30 Oct 2010 10:33:37 +0900 $
+;;   $LastModified: Sat, 30 Oct 2010 14:22:46 +0900 $
 ;;
 ;;   $Lastlog: doc update $
 ;;
@@ -205,7 +205,7 @@
     (defun auto-complete-mode(arg)))
   (defvar dropdown-list-overlays nil))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 50:d5ebb95369bc 2010-10-30 10:33 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 51:054aa57fc204 2010-10-30 14:22 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -745,7 +745,7 @@ has 3 different ways.
   (ahs-current-plugin-prop 'init))
 
 (defun ahs-change-range (&optional range nomsg)
-  "Change range according to major-mode"
+  "Change range according to plugin's definition."
   (interactive)
   (ahs-clear)
   (let* ((current)
@@ -890,6 +890,6 @@ has 3 different ways.
 (provide 'auto-highlight-symbol)
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 50:d5ebb95369bc 2010-10-30 10:33 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 51:054aa57fc204 2010-10-30 14:22 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here

@@ -61,8 +61,7 @@ The following properties are required
 * `start` -- symbol search start point.
 * `end` -- symbol search end point(BOUND).
 
-* return value of `name`,`lighter` must be a string.
-* return value of `start`,`end` must be a number.
+return value of `name`,`lighter` must be a string. `start`,`end` must be a number.
 
 ex. built-in whole buffer plugin
 
