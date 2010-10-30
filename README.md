@@ -78,7 +78,7 @@ ex. built-in whole buffer plugin
 * `init` -- executed when the plugin is selected.
 * `condition` -- conditions can be selected plug-in.
 * `major-mode` -- specify the major mode can be selected plug-in.
-* `before-search` -- executed when before symbol search.
+* `before-search` -- executed when before symbol search. called with the arguments(current symbol).
 
 License
 -------
