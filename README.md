@@ -21,7 +21,7 @@ Search range is determined by plugin.
 * whole buffer
 * current function(begnning-of-defun)
 
-`M-x ahs-change-range <RET>` or `C-x C-'` You can change plugin
+You can change the search range for `M-x ahs-change-range <RET>` or `C-x C-'`
 
 ScreenCast
 ----------
