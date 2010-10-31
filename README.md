@@ -1,7 +1,12 @@
 auto-highlight-symbol-mode 1.52
 ===============================
 
-A minor mode for emacs.   Automatic highlighting current symbol like [eclipse](http://www.eclipse.org) IDE.
+A minor mode for emacs.   
+
+* automatic highlighting current symbol like [eclipse](http://www.eclipse.org) IDE.
+* cycle through highlighted locations.
+* can specify the range to highlight.
+* can edit the highlighted symbols at a time.
 
 What's New in 1.5
 -----------------
