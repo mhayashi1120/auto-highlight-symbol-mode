@@ -117,7 +117,7 @@
 ;;  `ahs-toggle-search-whole-buffer'
 ;;    obsolete. please use ahs-change-range instead.
 ;;  `ahs-edit-mode'
-;;    Turn on edit mode. if call with prefix-args , current range change to `whole buffer' momentary.
+;;    Turn on edit mode. if call with prefix-args , change range to `whole buffer' momentary.
 ;;  `auto-highlight-symbol-mode'
 ;;    Automatic highlighting current symbol minor mode
 ;;
@@ -158,11 +158,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 54:211cdc3bec5f tip $
+;;   $Revision: 56:5dee8eda5e9f tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sun, 31 Oct 2010 14:46:58 +0900 $
+;;   $LastModified: Sun, 31 Oct 2010 18:53:10 +0900 $
 ;;
-;;   $Lastlog: skip folding $
+;;   $Lastlog: cosmetics $
 ;;
 
 ;;; Changelog
@@ -208,7 +208,7 @@
     (defun auto-complete-mode(arg)))
   (defvar dropdown-list-overlays nil))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 54:211cdc3bec5f 2010-10-31 14:46 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 56:5dee8eda5e9f 2010-10-31 18:53 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -240,6 +240,7 @@
     makefile-mode
     makefile-gmake-mode
     markdown-mode
+    moccur-edit-mode
     nxml-mode
     nxhtml-mode
     outline-mode
@@ -279,8 +280,8 @@
 (defcustom ahs-default-range 'ahs-range-display
   "Default range plugin"
   :group 'auto-highlight-symbol
-  :type '(choice (symbol :tag "in-display" ahs-range-display)
-                 (symbol :tag "whole-buffer" ahs-range-whole-buffer)))
+  :type '(choice (symbol :tag "Display area" ahs-range-display)
+                 (symbol :tag "Whole buffer" ahs-range-whole-buffer)))
 
 (defvar ahs-search-whole-buffer nil
   "Do not use. obsolete")
@@ -800,7 +801,7 @@ has 3 different ways.
 ;; (@* "Define mode" )
 ;;
 (defun ahs-edit-mode (arg &optional momentary force-off)
-  "Turn on edit mode. if call with prefix-args , current range change to `whole buffer' momentary."
+  "Turn on edit mode. if call with prefix-args , change range to `whole buffer' momentary."
   (interactive
    (if ahs-edit-mode-enable
        (list nil)
@@ -901,7 +902,10 @@ has 3 different ways.
 
 (provide 'auto-highlight-symbol)
 
+;;; Local Variables:
+;;; indent-tabs-mode: nil
+;;; End:
 ;;
-;; $Id: auto-highlight-symbol.el,v 54:211cdc3bec5f 2010-10-31 14:46 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 56:5dee8eda5e9f 2010-10-31 18:53 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
