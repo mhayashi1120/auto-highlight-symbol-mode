@@ -4,7 +4,7 @@
 ;; Created date 2009-03-03 21:44 +0900
 
 ;; Author: Mitsuo Saito <arch320@NOSPAM.gmail.com>
-;; Version: 1.51
+;; Version: 1.52
 ;; Keywords: face match convenience
 ;; URL: http://github.com/mitsuo-saito/auto-highlight-symbol-mode/raw/master/auto-highlight-symbol.el
 ;; Compatibility: GNU Emacs 23.x 24.x later
@@ -40,13 +40,13 @@
 ;; (@> "Face")               Face used in auto-highlight-symbol-mode
 ;; (@> "Regular expression") Symbol include/exclude regular expression
 ;; (@> "Internal variable")  Internal variables
-;; (@> "Timer")              Timer function
-;; (@> "Idle")               Idle function
 ;; (@> "Range plugin")       Range plugin function
 ;; (@> "Built-in plugin")    Built-in plugin section
+;; (@> "Timer")              Timer function
+;; (@> "Idle")               Idle function
 ;; (@> "Highlight")          Highlight function
+;; (@> "Edit mode")          Overlay's modification-hook function used in edit mode
 ;; (@> "Select")             Selective function
-;; (@> "Edit mode")          Edit mode futction
 ;; (@> "Interactive")        Interactive function
 ;; (@> "Define mode")        Register minor mode
 ;; (@> "Protect overlay")    Protect overlay for edit mode
@@ -158,14 +158,17 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 53:28d701e0eb67 tip $
+;;   $Revision: 54:211cdc3bec5f tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sat, 30 Oct 2010 16:50:03 +0900 $
+;;   $LastModified: Sun, 31 Oct 2010 14:46:58 +0900 $
 ;;
-;;   $Lastlog: minor fix $
+;;   $Lastlog: skip folding $
 ;;
 
 ;;; Changelog
+;;
+;; v1.52 2010-10-31 14:46 +0900
+;;   skip folding(select function only)
 ;;
 ;; v1.51 2010-10-30 09:17 +0900
 ;;   plugin minor change
@@ -205,7 +208,7 @@
     (defun auto-complete-mode(arg)))
   (defvar dropdown-list-overlays nil))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 53:28d701e0eb67 2010-10-30 16:50 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 54:211cdc3bec5f 2010-10-31 14:46 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -447,40 +450,6 @@ has 3 different ways.
 (make-variable-buffer-local 'ahs-overlay-list    )
 
 ;;
-;; (@* "Timer" )
-;;
-(defun ahs-start-timer ()
-  "Start idle timer"
-  (unless ahs-idle-timer
-    (setq ahs-idle-timer (run-with-idle-timer ahs-idle-interval t 'ahs-idle-function))))
-
-(defun ahs-restart-timer ()
-  "Restart idle timer"
-  (when (timerp ahs-idle-timer)
-    (cancel-timer ahs-idle-timer)
-    (setq ahs-idle-timer nil)
-    (ahs-start-timer)))
-
-;;
-;; (@* "Idle" )
-;;
-(defun ahs-idle-function ()
-  "Idle function"
-  (when auto-highlight-symbol-mode
-    (let* ((bounds (bounds-of-thing-at-point 'symbol))
-           (start (car bounds))
-           (end (cdr bounds))
-           (symbol (when bounds
-                     (buffer-substring-no-properties start end))))
-      (when (and bounds
-                 (not ahs-highlighted)
-                 (not (ahs-dropdown-list-p))
-                 (not (memq (get-char-property (point) 'face) ahs-inhibit-face-list))
-                 (not (ahs-symbol-p ahs-exclude symbol t))
-                 (ahs-symbol-p ahs-include symbol))
-        (ahs-highlight symbol start end)))))
-
-;;
 ;; (@* "Range plugin" )
 ;;
 (defmacro ahs-regist-range-plugin (name plugin &optional doc)
@@ -568,6 +537,40 @@ has 3 different ways.
  "beginning-of-defun to end-of-defun like C-x n d (narrow-to-defun)")
 
 ;;
+;; (@* "Timer" )
+;;
+(defun ahs-start-timer ()
+  "Start idle timer"
+  (unless ahs-idle-timer
+    (setq ahs-idle-timer (run-with-idle-timer ahs-idle-interval t 'ahs-idle-function))))
+
+(defun ahs-restart-timer ()
+  "Restart idle timer"
+  (when (timerp ahs-idle-timer)
+    (cancel-timer ahs-idle-timer)
+    (setq ahs-idle-timer nil)
+    (ahs-start-timer)))
+
+;;
+;; (@* "Idle" )
+;;
+(defun ahs-idle-function ()
+  "Idle function"
+  (when auto-highlight-symbol-mode
+    (let* ((bounds (bounds-of-thing-at-point 'symbol))
+           (start (car bounds))
+           (end (cdr bounds))
+           (symbol (when bounds
+                     (buffer-substring-no-properties start end))))
+      (when (and bounds
+                 (not ahs-highlighted)
+                 (not (ahs-dropdown-list-p))
+                 (not (memq (get-char-property (point) 'face) ahs-inhibit-face-list))
+                 (not (ahs-symbol-p ahs-exclude symbol t))
+                 (ahs-symbol-p ahs-include symbol))
+        (ahs-highlight symbol start end)))))
+
+;;
 ;; (@* "Highlight" )
 ;;
 (defun ahs-symbol-p (predicate symbol &optional nodefs)
@@ -651,34 +654,6 @@ has 3 different ways.
         ahs-overlay-list    nil))
 
 ;;
-;; (@* "Select" )
-;;
-(defun ahs-select (predicate candidate)
-  "Select highlighted symbols"
-  (when (and ahs-highlighted
-             (> (length candidate) 0))
-    (let* ((now (overlay-start ahs-current-overlay))
-           (p (or (loop for x in candidate
-                        when (funcall predicate now x)
-                        collect x)
-                  candidate))
-           (beg (overlay-start (car p)))
-           (end (overlay-end   (car p))))
-      (goto-char (+ beg (- (point) now)))
-      (delete-overlay ahs-current-overlay)
-      (ahs-highlight-current-symbol beg end))))
-
-(defun ahs-remove-if (predicate candidate)
-  "Remove-if not? :D"
-  (loop for overlay in candidate
-        when (funcall predicate overlay)
-        collect overlay))
-
-(defun ahs-forward-predicate  (x y) (< x (overlay-start y)))
-(defun ahs-backward-predicate (x y) (> x (overlay-start y)))
-(defun ahs-defined-predicate  (x)   (eq (overlay-get x 'face) 'ahs-defined-face))
-
-;;
 ;; (@* "Edit mode" )
 ;;
 (defun ahs-modification-hook-function (overlay after beg end &optional length)
@@ -709,29 +684,66 @@ has 3 different ways.
       (ahs-edit-mode nil)))
 
 ;;
+;; (@* "Select" )
+;;
+(defun ahs-select (predicate candidate)
+  "Select highlighted symbols"
+  (when (and ahs-highlighted
+             candidate)
+    (let* ((now (overlay-start ahs-current-overlay))
+           (next (or (loop for x in candidate
+                           when (funcall predicate now x)
+                           return x)
+                     (car candidate)))
+           (beg (overlay-start next))
+           (end (overlay-end next)))
+      (goto-char (+ beg (- (point) now)))
+      (delete-overlay ahs-current-overlay)
+      (ahs-highlight-current-symbol beg end))))
+
+(defun ahs-collect-difinition (candidate)
+  "Collect difinition"
+  (loop for x in candidate
+        when (ahs-defined-p x)
+        collect x))
+
+(defun ahs-remove-folding (candidate)
+  "Remove folding"
+  (loop for x in candidate
+        unless (ahs-folding-p x)
+        collect x))
+
+(defun ahs-forward-p  (x y) (< x (overlay-start y)))
+(defun ahs-backward-p (x y) (> x (overlay-start y)))
+(defun ahs-defined-p  (x)   (eq (overlay-get x 'face) 'ahs-defined-face))
+(defun ahs-folding-p  (x)
+  "Check folding"
+  (loop for overlay in (overlays-at (overlay-start x))
+        when (overlay-get overlay 'invisible)
+        return overlay))
+
+;;
 ;; (@* "Interactive" )
 ;;
 (defun ahs-forward ()
   "Select highlighted symbols forwardly."
   (interactive)
-  (ahs-select 'ahs-forward-predicate (reverse ahs-overlay-list)))
+  (ahs-select 'ahs-forward-p (reverse (ahs-remove-folding ahs-overlay-list))))
 
 (defun ahs-backward ()
   "Select highlighted symbols backwardly."
   (interactive)
-  (ahs-select 'ahs-backward-predicate ahs-overlay-list))
+  (ahs-select 'ahs-backward-p (ahs-remove-folding ahs-overlay-list)))
 
 (defun ahs-forward-defined ()
   "Select highlighted symbols forwardly. only symbol definition."
   (interactive)
-  (ahs-select 'ahs-forward-predicate
-              (reverse (ahs-remove-if 'ahs-defined-predicate ahs-overlay-list))))
+  (ahs-select 'ahs-forward-p (reverse (ahs-remove-folding (ahs-collect-difinition ahs-overlay-list)))))
 
 (defun ahs-backward-defined ()
   "Select highlighted symbols backwardly. only symbol definition."
   (interactive)
-  (ahs-select 'ahs-backward-predicate
-              (ahs-remove-if 'ahs-defined-predicate ahs-overlay-list)))
+  (ahs-select 'ahs-backward-p (ahs-remove-folding (ahs-collect-difinition ahs-overlay-list))))
 
 (defun ahs-set-idle-interval (secs)
   "Set wait until highlighting symbol when emacs is idle."
@@ -890,6 +902,6 @@ has 3 different ways.
 (provide 'auto-highlight-symbol)
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 53:28d701e0eb67 2010-10-30 16:50 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 54:211cdc3bec5f 2010-10-31 14:46 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
