@@ -13,7 +13,7 @@ What's New in 1.5
 
 ### Range Plugin Available
 
-Search range is set by plugin.
+Search range set by plugin.
 
 3 built-in plugins available.
 

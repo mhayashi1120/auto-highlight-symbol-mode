@@ -1,4 +1,4 @@
-﻿;;; auto-highlight-symbol.el --- Automatic highlighting current symbol minor mode
+;;; auto-highlight-symbol.el --- Automatic highlighting current symbol minor mode
 
 ;; Copyright (C) 2009 2010 Mitsuo Saito
 ;; Created date 2009-03-03 21:44 +0900
@@ -7,7 +7,7 @@
 ;; Version: 1.52
 ;; Keywords: face match convenience
 ;; URL: http://github.com/mitsuo-saito/auto-highlight-symbol-mode/raw/master/auto-highlight-symbol.el
-;; Compatibility: GNU Emacs 23.x 24.x later
+;; Compatibility: GNU Emacs 22.3 23.x 24.x later
 ;;
 ;; This file is NOT part of GNU Emacs.
 
@@ -64,9 +64,9 @@
 ;;
 ;;; (@* "ScreenCast" )
 ;;
-;;  screencast available on YouTube and ScreenToaster
-;;  http://www.youtube.com/watch?v=xzJ2r4-s7fo
-;;  http://www.screentoaster.com/watch/stUE9VQ0dMRFtXRlVeU19cX1Bd/auto_highlight_symbol_mode_screencast
+;;  Screencast available on YouTube and ScreenToaster
+;;    YouTube -- http://www.youtube.com/watch?v=xzJ2r4-s7fo
+;;    ScreenToaster -- http://www.screentoaster.com/watch/stUE9VQ0dMRFtXRlVeU19cX1Bd/auto_highlight_symbol_mode_screencast
 ;;
 
 ;;; (@* "Setting")
@@ -95,7 +95,7 @@
 ;;      momentary
 ;;         C-u C-x C-a   ;; call 'ahs-edit-mode with prefix-args
 ;;
-;;      that's all. but changing symbol you can't see. so carefully.
+;;      changing symbol you can't see. so carefully.
 ;;
 
 ;;; Commands:
@@ -158,11 +158,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 56:5dee8eda5e9f tip $
+;;   $Revision: 57:4479d1fa8a58 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sun, 31 Oct 2010 18:53:10 +0900 $
+;;   $LastModified: Mon, 01 Nov 2010 08:39:22 +0900 $
 ;;
-;;   $Lastlog: cosmetics $
+;;   $Lastlog: minor update $
 ;;
 
 ;;; Changelog
@@ -192,7 +192,7 @@
 ;;   first release
 ;;
 
-;; Tested on Emacs 23.2/24.05
+;; Tested on Emacs 22.3/23.2/24.05
 
 ;;; TODO
 ;;
@@ -208,7 +208,7 @@
     (defun auto-complete-mode(arg)))
   (defvar dropdown-list-overlays nil))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 56:5dee8eda5e9f 2010-10-31 18:53 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 57:4479d1fa8a58 2010-11-01 08:39 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -413,7 +413,7 @@ has 3 different ways.
                  (alist :tag "alist")))
 
 ;;
-;; (@* "Mode map" )
+;; l(@* "Mode map" )
 ;;
 (defvar auto-highlight-symbol-mode-map nil "Keymap used in auto-highlight-symbol-mode.")
 
@@ -433,6 +433,12 @@ has 3 different ways.
 (defvar auto-highlight-symbol-mode nil "dummy for suppress bytecompiler warning")
 
 (defconst ahs-modification-hook-list '( ahs-modification-hook-function ))
+
+(defconst ahs-symbol-border-pattern
+  (if (>= emacs-major-version 22)
+      '("\\_<" . "\\_>")
+    '("\\<" . "\\>"))
+  "Symbol border pattern")
 
 (defvar ahs-range-plugin-list nil
   "List of installed range plugin.")
@@ -606,7 +612,11 @@ has 3 different ways.
           (range-end (ahs-current-plugin-prop 'end)))
       (goto-char range-start)
       (while (re-search-forward
-              (concat "\\_<\\(" (regexp-quote symbol) "\\)\\_>") range-end t)
+              (concat (car ahs-symbol-border-pattern)
+                      "\\("
+                      (regexp-quote symbol)
+                      "\\)"
+                      (cdr ahs-symbol-border-pattern)) range-end t)
         (let* ((beg (match-beginning 1))
                (pface (get-char-property beg 'face))
                (overlay))
@@ -906,6 +916,6 @@ has 3 different ways.
 ;;; indent-tabs-mode: nil
 ;;; End:
 ;;
-;; $Id: auto-highlight-symbol.el,v 56:5dee8eda5e9f 2010-10-31 18:53 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 57:4479d1fa8a58 2010-11-01 08:39 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
