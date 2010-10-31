@@ -1,4 +1,4 @@
-auto-highlight-symbol-mode 1.51
+auto-highlight-symbol-mode 1.52
 ===============================
 
 A minor mode for emacs.   Automatic highlighting current symbol like [eclipse](http://www.eclipse.org) IDE.
@@ -16,7 +16,7 @@ Search range is determined by plugin.
 * whole buffer
 * current function(begnning-of-defun)
 
-You can change `M-x ahs-change-range <RET>` or `C-x C-'`
+`M-x ahs-change-range <RET>` or `C-x C-'` You can change plugin
 
 ScreenCast
 ----------
