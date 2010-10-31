@@ -24,6 +24,10 @@ Search range is determined by plugin.
 You can change the search range 
 `M-x ahs-change-range <RET>` or `C-x C-'`
 
+ScreenShot
+----------
+![ScreenShot](http://github.com/mitsuo-saito/auto-highlight-symbol-mode/raw/master/ScreenShot.png)
+
 ScreenCast
 ----------
 
