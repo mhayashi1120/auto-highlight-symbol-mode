@@ -1,4 +1,4 @@
-auto-highlight-symbol-mode 1.52
+Auto highlight symbol mode 1.52
 ===============================
 
 A minor mode for emacs.   
@@ -7,6 +7,13 @@ A minor mode for emacs.
 * cycle through highlighted locations.
 * can specify the range to highlight.
 * can edit the highlighted symbols at a time.
+
+Requirement
+-----------
+
+Gnu Emacs 22.3 later
+
+Tested on Gnu Emacs 22.3/23.2/24.05
 
 What's New in 1.5
 -----------------
