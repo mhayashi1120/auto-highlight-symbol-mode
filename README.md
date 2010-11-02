@@ -8,13 +8,6 @@ A minor mode for emacs.
 * can specify the range to highlight.
 * can edit the highlighted symbols at a time.
 
-Requirement
------------
-
-Gnu Emacs 22.3 later
-
-Tested on Gnu Emacs 22.3/23.2/24.0.50
-
 What's New in 1.5
 -----------------
 
@@ -30,18 +23,6 @@ Search range set by plugin.
 
 You can change the search range 
 `M-x ahs-change-range <RET>` or `C-x C-'`
-
-Screenshot
-----------
-![ScreenShot](http://github.com/mitsuo-saito/auto-highlight-symbol-mode/raw/master/ScreenShot.png)
-
-Screencast
-----------
-
-Available on YouTube and ScreenToaster.
-
-* YouTube -- [http://www.youtube.com/watch?v=xzJ2r4-s7fo](http://www.youtube.com/watch?v=xzJ2r4-s7fo)
-* ScreenToaster -- [http://www.screentoaster.com/watch/stUE9VQ0dMRFtXRlVeU19cX1Bd/auto_highlight_symbol_mode_screencast](http://www.screentoaster.com/watch/stUE9VQ0dMRFtXRlVeU19cX1Bd/auto_highlight_symbol_mode_screencast)
 
 More Information
 ----------------
