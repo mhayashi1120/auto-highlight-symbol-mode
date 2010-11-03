@@ -139,7 +139,7 @@
 ;;  `ahs-toggle-search-whole-buffer'
 ;;    obsolete. please use ahs-change-range instead.
 ;;  `ahs-edit-mode'
-;;    Toggle edit mode. if call with prefix-args , change range to `whole buffer' temporary.
+;;    Turn on edit mode. if call with prefix-args , change range to `whole buffer' temporary.
 ;;  `auto-highlight-symbol-mode'
 ;;    Automatic highlighting current symbol minor mode
 ;;
@@ -182,16 +182,16 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 67:1cb924fe6114 tip $
+;;   $Revision: 68:8f15e56364be tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Wed, 03 Nov 2010 20:36:58 +0900 $
+;;   $LastModified: Wed, 03 Nov 2010 22:17:33 +0900 $
 ;;
-;;   $Lastlog: typo $
+;;   $Lastlog: timestamp $
 ;;
 
 ;;; Changelog
 ;;
-;; v1.53
+;; v1.53 2010-11-03 22:17 +0900
 ;;   improve invisible overlay's handling
 ;;   new plugin property `face' available
 ;;   add ahs-back-to-start
@@ -235,7 +235,7 @@
 (eval-and-compile
   (defconst ahs-web "http://github.com/mitsuo-saito/auto-highlight-symbol-mode/"))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 67:1cb924fe6114 2010-11-03 20:36 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 68:8f15e56364be 2010-11-03 22:17 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -901,7 +901,7 @@ has 3 different ways.
     (push overlay ahs-opened-overlay-list)))
 
 (defun ahs-store-property (overlay from to)
-  "Store overlay property"
+  "Store overlay's property"
   (overlay-put overlay to (overlay-get overlay from))
   (overlay-put overlay from nil))
 
@@ -1123,6 +1123,6 @@ has 3 different ways.
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 67:1cb924fe6114 2010-11-03 20:36 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 68:8f15e56364be 2010-11-03 22:17 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
