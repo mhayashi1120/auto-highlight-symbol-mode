@@ -1,4 +1,4 @@
-Auto Highlight Symbol Mode 1.52
+Auto Highlight Symbol Mode 1.53
 ===============================
 
 A minor mode for emacs.   
@@ -27,7 +27,7 @@ You can change the search range
 More Information
 ----------------
 
-[Wiki](http://github.com/mitsuo-saito/auto-highlight-symbol-mode/wiki/)
+See also [Wiki](http://github.com/mitsuo-saito/auto-highlight-symbol-mode/wiki/)
 
 License
 -------
