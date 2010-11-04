@@ -182,11 +182,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 70:542ae42370e4 tip $
+;;   $Revision: 71:f780ef36dad1 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Thu, 04 Nov 2010 12:52:08 +0900 $
+;;   $LastModified: Thu, 04 Nov 2010 13:52:57 +0900 $
 ;;
-;;   $Lastlog: some tweak $
+;;   $Lastlog: minor change $
 ;;
 
 ;;; Changelog
@@ -239,7 +239,7 @@
 (eval-and-compile
   (defconst ahs-web "http://github.com/mitsuo-saito/auto-highlight-symbol-mode/"))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 70:542ae42370e4 2010-11-04 12:52 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 71:f780ef36dad1 2010-11-04 13:52 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -540,16 +540,16 @@ has 3 different ways.
 ;;
 ;; (@* "Range plugin" )
 ;;
-(defmacro ahs-regist-range-plugin (name plugin &optional doc)
+(defmacro ahs-regist-range-plugin (plugin-name body &optional docstring)
   "Macro of regist range plugin"
   `(progn
-     (defvar ,(intern (format "ahs-range-%s" name))
-       nil ,doc)
-     (setq ,(intern (format "ahs-range-%s" name)) ,plugin)
-     (add-to-list 'ahs-range-plugin-list ',(intern (format "ahs-range-%s" name)))
-     (defun ,(intern (format "ahs-chrange-%s" name)) ()
+     (defvar ,(intern (format "ahs-range-%s" plugin-name))
+       nil ,docstring)
+     (setq ,(intern (format "ahs-range-%s" plugin-name)) ,body)
+     (add-to-list 'ahs-range-plugin-list ',(intern (format "ahs-range-%s" plugin-name)))
+     (defun ,(intern (format "ahs-chrange-%s" plugin-name)) ()
        (interactive)
-       (ahs-change-range ',(intern (format "ahs-range-%s" name))))))
+       (ahs-change-range ',(intern (format "ahs-range-%s" plugin-name))))))
 
 (defun ahs-plugin-error-message (err plugin prop)
   "Display plugin error message"
@@ -582,7 +582,7 @@ has 3 different ways.
                  (funcall p))
              (error err (ahs-plugin-error-message err plugin prop))))
 
-          ;; nil
+          ;; property not found
           ((null p) 'none)
 
           ;; symbol
@@ -602,7 +602,7 @@ has 3 different ways.
 (ahs-regist-range-plugin
  display
  '((name    . "display area")
-   (lighter . " HS")
+   (lighter . "HS")
    (face    . ahs-at-point-face)
    (start   . window-start)
    (end     . window-end))
@@ -611,7 +611,7 @@ has 3 different ways.
 (ahs-regist-range-plugin
  whole-buffer
  '((name    . "whole buffer")
-   (lighter . " HSA")
+   (lighter . "HSA")
    (face    . ahs-whole-of-buffer-face)
    (start   . point-min)
    (end     . point-max))
@@ -623,7 +623,7 @@ has 3 different ways.
 (ahs-regist-range-plugin
  beginning-of-defun
  '((name          . "beginning of defun")
-   (lighter       . " HSD")
+   (lighter       . "HSD")
    (face          . ahs-beginning-of-defun-face)
    (major-mode    . (emacs-lisp-mode lisp-interaction-mode c++-mode c-mode))
    (before-search . (lambda(x)
@@ -1044,7 +1044,7 @@ has 3 different ways.
   "Set mode line lighter"
   (setq ahs-mode-line
         (cond ((or ahs-edit-mode-enable) ahs-edit-mode-lighter)
-              (t (ahs-current-plugin-prop 'lighter))))
+              (t (concat " " (ahs-current-plugin-prop 'lighter)))))
   (force-mode-line-update))
 
 (defun ahs-init ()
@@ -1110,6 +1110,6 @@ has 3 different ways.
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 70:542ae42370e4 2010-11-04 12:52 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 71:f780ef36dad1 2010-11-04 13:52 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
