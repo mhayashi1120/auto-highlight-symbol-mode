@@ -182,11 +182,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 71:f780ef36dad1 tip $
+;;   $Revision: 72:654d8c9978e3 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Thu, 04 Nov 2010 13:52:57 +0900 $
+;;   $LastModified: Thu, 04 Nov 2010 18:27:33 +0900 $
 ;;
-;;   $Lastlog: minor change $
+;;   $Lastlog: some fix $
 ;;
 
 ;;; Changelog
@@ -224,6 +224,7 @@
 
 ;;; TODO:
 ;;
+;;  fix font-lock-fontify  !!MUST BE FIX!!
 ;;  refactor
 ;;  sticky highlight??
 ;;
@@ -239,7 +240,7 @@
 (eval-and-compile
   (defconst ahs-web "http://github.com/mitsuo-saito/auto-highlight-symbol-mode/"))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 71:f780ef36dad1 2010-11-04 13:52 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 72:654d8c9978e3 2010-11-04 18:27 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -418,23 +419,24 @@ Because i don't know how to open\(delete) overlay."
   :group 'auto-highlight-symbol)
 (defvar ahs-defined-face 'ahs-defined-face)
 
-(defface ahs-at-point-face
+(defface ahs-plugin-defalt-face
   '((t (:foreground "Black" :background "Orange1")))
-  "Face of highlighted symbol at point"
+  "Face of default range"
   :group 'auto-highlight-symbol)
-(defvar ahs-at-point-face 'ahs-at-point-face)
+(defvar ahs-plugin-defalt-face 'ahs-plugin-defalt-face)
+(defalias 'ahs-at-point-face 'ahs-plugin-defalt-face)
 
-(defface ahs-whole-of-buffer-face
+(defface ahs-plugin-whole-buffer-face
   '((t (:foreground "Black" :background "GreenYellow")))
-  "Face of whole-of-buffer range"
+  "Face of `whole buffer' range"
   :group 'auto-highlight-symbol)
-(defvar ahs-whole-of-buffer-face 'ahs-whole-of-buffer-face)
+(defvar ahs-plugin-whole-buffer-face 'ahs-plugin-whole-buffer-face)
 
-(defface ahs-beginning-of-defun-face
+(defface ahs-plugin-bod-face
   '((t (:foreground "Black" :background "DodgerBlue")))
-  "Face of beginning-of-defun range"
+  "Face of `beginning-of-defun' range"
   :group 'auto-highlight-symbol)
-(defvar ahs-beginning-of-defun-face 'ahs-beginning-of-defun-face)
+(defvar ahs-plugin-bod-face 'ahs-plugin-bod-face)
 
 (defface ahs-edit-mode-face
   '((t (:foreground "White" :background "Coral3")))
@@ -565,32 +567,38 @@ has 3 different ways.
 (defun ahs-get-plugin-prop (prop plugin &optional arg)
   "Get property value from plugin"
   (let ((p (cdr (assoc prop plugin))))
-    (cond (;; major-mode
-           (and (functionp p)
-                (equal prop 'major-mode)) p)
+    (cond
+     ;;abort
+     ((equal p 'abort) 'abort)
 
-          ;; face
-          ((equal prop 'face) (if (not (facep p))
-                                  ahs-at-point-face
-                                p))
+     ;; major-mode
+     ((and (functionp p)
+           (equal prop 'major-mode)) p)
 
-          ;; function
-          ((functionp p)
-           (condition-case err
-               (if arg
-                   (funcall p arg)
-                 (funcall p))
-             (error err (ahs-plugin-error-message err plugin prop))))
+     ;; face
+     ((equal prop 'face)
+      (if (not (facep p))
+          ahs-plugin-defalt-face
+        p))
 
-          ;; property not found
-          ((null p) 'none)
+     ;; function
+     ((functionp p)
+      (condition-case err
+          (if arg
+              (funcall p arg)
+            (funcall p))
+        (error err (ahs-plugin-error-message err plugin prop))))
 
-          ;; symbol
-          ((symbolp p) (ignore-errors
-                         (symbol-value p)))
+     ;; property not found
+     ((null p) 'none)
 
-          ;; others
-          (t p))))
+     ;; symbol
+     ((symbolp p)
+      (ignore-errors
+        (symbol-value p)))
+
+     ;; others
+     (t p))))
 
 (defun ahs-current-plugin-prop (prop &optional arg)
   "Get property value from current range plugin"
@@ -603,7 +611,7 @@ has 3 different ways.
  display
  '((name    . "display area")
    (lighter . "HS")
-   (face    . ahs-at-point-face)
+   (face    . ahs-plugin-defalt-face)
    (start   . window-start)
    (end     . window-end))
   "Display area")
@@ -612,33 +620,33 @@ has 3 different ways.
  whole-buffer
  '((name    . "whole buffer")
    (lighter . "HSA")
-   (face    . ahs-whole-of-buffer-face)
+   (face    . ahs-plugin-whole-buffer-face)
    (start   . point-min)
    (end     . point-max))
  "Whole buffer")
 
-(defvar ahs-range-bod-start nil)
-(defvar ahs-range-bod-end nil)
+(defvar ahs-plugin-bod-start nil)
+(defvar ahs-plugin-bod-end nil)
 
 (ahs-regist-range-plugin
  beginning-of-defun
  '((name          . "beginning of defun")
    (lighter       . "HSD")
-   (face          . ahs-beginning-of-defun-face)
+   (face          . ahs-plugin-bod-face)
    (major-mode    . (emacs-lisp-mode lisp-interaction-mode c++-mode c-mode))
    (before-search . (lambda(x)
                       (save-excursion
                         (let ((opoint (point)))
                           (beginning-of-defun)
-                          (setq ahs-range-bod-start (point))
+                          (setq ahs-plugin-bod-start (point))
                           (end-of-defun)
-                          (setq ahs-range-bod-end (point))
-                          (when (> opoint ahs-range-bod-end)
-                            (setq ahs-range-bod-start ahs-range-bod-end)
+                          (setq ahs-plugin-bod-end (point))
+                          (when (> opoint ahs-plugin-bod-end)
+                            (setq ahs-plugin-bod-start ahs-plugin-bod-end)
                             (beginning-of-defun -1)
-                            (setq ahs-range-bod-end (point)))))))
-   (start         . ahs-range-bod-start)
-   (end           . ahs-range-bod-end))
+                            (setq ahs-plugin-bod-end (point)))))))
+   (start         . ahs-plugin-bod-start)
+   (end           . ahs-plugin-bod-end))
  "beginning-of-defun to end-of-defun like C-x n d \(narrow-to-defun)")
 
 ;;
@@ -711,35 +719,36 @@ has 3 different ways.
 ;;
 (defun ahs-highlight (symbol start end)
   "Highlight"
-  (save-excursion
-    (ahs-current-plugin-prop 'before-search symbol)
-    (let ((case-fold-search ahs-case-fold-search)
-          (range-start (ahs-current-plugin-prop 'start))
-          (range-end (ahs-current-plugin-prop 'end)))
-      (goto-char range-start)
-      (while (re-search-forward
-              (concat (car ahs-symbol-border-pattern)
-                      "\\("
-                      (regexp-quote symbol)
-                      "\\)"
-                      (cdr ahs-symbol-border-pattern)) range-end t)
-        (let* ((beg (match-beginning 1))
-               (pface (get-char-property beg 'face))
-               (overlay))
-          (unless (ahs-inhibit-face-p pface)
-            (setq overlay (make-overlay beg (match-end 1) nil nil t))
-            (overlay-put overlay 'ahs-symbol t)
-            (unless (memq pface ahs-invisible-face-list)
-              (overlay-put overlay 'face
-                           (if (memq pface ahs-defined-face-list)
-                               ahs-defined-face
-                             ahs-face)))
-            (push overlay ahs-overlay-list))))))
-  (when ahs-overlay-list
-    (ahs-highlight-current-symbol start end)
-    (setq ahs-start-point start)
-    (setq ahs-highlighted t)
-    (add-hook 'pre-command-hook 'ahs-unhighlight nil t)))
+  (if (equal 'abort (ahs-current-plugin-prop 'before-search symbol))
+      nil
+    (save-excursion
+      (let ((case-fold-search ahs-case-fold-search)
+            (range-start (ahs-current-plugin-prop 'start))
+            (range-end (ahs-current-plugin-prop 'end)))
+        (goto-char range-start)
+        (while (re-search-forward
+                (concat (car ahs-symbol-border-pattern)
+                        "\\("
+                        (regexp-quote symbol)
+                        "\\)"
+                        (cdr ahs-symbol-border-pattern)) range-end t)
+          (let* ((beg (match-beginning 1))
+                 (pface (get-char-property beg 'face))
+                 (overlay))
+            (unless (ahs-inhibit-face-p pface)
+              (setq overlay (make-overlay beg (match-end 1) nil nil t))
+              (overlay-put overlay 'ahs-symbol t)
+              (unless (memq pface ahs-invisible-face-list)
+                (overlay-put overlay 'face
+                             (if (memq pface ahs-defined-face-list)
+                                 ahs-defined-face
+                               ahs-face)))
+              (push overlay ahs-overlay-list))))))
+    (when ahs-overlay-list
+      (ahs-highlight-current-symbol start end)
+      (setq ahs-start-point start)
+      (setq ahs-highlighted t)
+      (add-hook 'pre-command-hook 'ahs-unhighlight nil t)) t))
 
 (defun ahs-unhighlight ()
   "Unhighlight"
@@ -815,7 +824,6 @@ has 3 different ways.
           (ahs-start-point)
           (ahs-opened-overlay-list))
       (ahs-remove-all-overlay)
-      ;; need font-lock-fontify-region ?
       (ahs-idle-function)))
   (setq ahs-edit-mode-enable t)
   (overlay-put ahs-current-overlay 'face ahs-edit-mode-face)
@@ -1008,7 +1016,7 @@ has 3 different ways.
                           collect x
                           do (when (equal plugin ahs-current-range)
                                (setq current x))))
-         (next (car (cdr (memq current available)))))
+         (next (cadr (memq current available))))
     (if range
         (if (memq range available)
             (ahs-change-range-internal range)
@@ -1110,6 +1118,6 @@ has 3 different ways.
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 71:f780ef36dad1 2010-11-04 13:52 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 72:654d8c9978e3 2010-11-04 18:27 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
