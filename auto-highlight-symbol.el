@@ -33,6 +33,7 @@
 ;;  http://www.emacswiki.org/cgi-bin/wiki/download/linkd.el
 ;;  http://www.emacswiki.org/emacs/linkd.tar.gz -- with cool icon
 ;;
+
 ;;; (@* "Index" )
 ;;
 ;; (@> "What's this")        I am ...
@@ -54,7 +55,6 @@
 ;; (@> "Select")             Selective function
 ;; (@> "Interactive")        Interactive function
 ;; (@> "Define mode")        Register minor mode
-;; (@> "Protect overlay")    Protect overlay for edit mode
 ;; (@> "Revert")             Protect from revert-buffer
 ;;
 
@@ -97,7 +97,7 @@
 ;;   * Default mode's behavior(highlighting and editing)
 ;;     affects display area only   ;; from (window-start) to (window-end)
 ;;
-;;     If you want affects whole-buffer
+;;     If you want affects whole buffer
 ;;
 ;;      all-buffers
 ;;         (setq ahs-default-range 'ahs-range-whole-buffer)
@@ -182,11 +182,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 68:8f15e56364be tip $
+;;   $Revision: 70:542ae42370e4 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Wed, 03 Nov 2010 22:17:33 +0900 $
+;;   $LastModified: Thu, 04 Nov 2010 12:52:08 +0900 $
 ;;
-;;   $Lastlog: timestamp $
+;;   $Lastlog: some tweak $
 ;;
 
 ;;; Changelog
@@ -222,20 +222,24 @@
 ;;   first release
 ;;
 
+;;; TODO:
+;;
+;;  refactor
+;;  sticky highlight??
+;;
+
 ;;; Code:
 
 (eval-when-compile
   ;; suppress bytecompiler error warning
   (require 'easy-mmode)
   (require 'cl)
-  (unless (fboundp 'auto-complete-mode)
-    (defun auto-complete-mode(arg)))
   (defvar dropdown-list-overlays nil))
 
 (eval-and-compile
   (defconst ahs-web "http://github.com/mitsuo-saito/auto-highlight-symbol-mode/"))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 68:8f15e56364be 2010-11-03 22:17 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 70:542ae42370e4 2010-11-04 12:52 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -561,17 +565,31 @@ has 3 different ways.
 (defun ahs-get-plugin-prop (prop plugin &optional arg)
   "Get property value from plugin"
   (let ((p (cdr (assoc prop plugin))))
-    (cond ((and (functionp p)
+    (cond (;; major-mode
+           (and (functionp p)
                 (equal prop 'major-mode)) p)
+
+          ;; face
+          ((equal prop 'face) (if (not (facep p))
+                                  ahs-at-point-face
+                                p))
+
+          ;; function
           ((functionp p)
            (condition-case err
                (if arg
                    (funcall p arg)
                  (funcall p))
              (error err (ahs-plugin-error-message err plugin prop))))
+
+          ;; nil
           ((null p) 'none)
+
+          ;; symbol
           ((symbolp p) (ignore-errors
                          (symbol-value p)))
+
+          ;; others
           (t p))))
 
 (defun ahs-current-plugin-prop (prop &optional arg)
@@ -604,7 +622,7 @@ has 3 different ways.
 
 (ahs-regist-range-plugin
  beginning-of-defun
- '((name          . "beginning-of-defun")
+ '((name          . "beginning of defun")
    (lighter       . " HSD")
    (face          . ahs-beginning-of-defun-face)
    (major-mode    . (emacs-lisp-mode lisp-interaction-mode c++-mode c-mode))
@@ -621,7 +639,7 @@ has 3 different ways.
                             (setq ahs-range-bod-end (point)))))))
    (start         . ahs-range-bod-start)
    (end           . ahs-range-bod-end))
- "beginning-of-defun to end-of-defun like C-x n d (narrow-to-defun)")
+ "beginning-of-defun to end-of-defun like C-x n d \(narrow-to-defun)")
 
 ;;
 ;; (@* "Timer" )
@@ -741,18 +759,10 @@ has 3 different ways.
 
 (defun ahs-highlight-current-symbol (beg end)
   "Highlight current symbol"
-  (setq ahs-current-overlay nil)
-  (let* ((overlay (make-overlay beg end nil nil t))
-         (face (ahs-current-plugin-prop 'face))
-         (face (if ahs-edit-mode-enable
-                   ahs-edit-mode-face
-                 face))
-         (face (if (not (facep face))
-                   ahs-at-point-face
-                 face)))
+  (let* ((overlay (make-overlay beg end nil nil t)))
     (overlay-put overlay 'ahs-symbol t)
     (overlay-put overlay 'priority 1000)
-    (overlay-put overlay 'face face)
+    (overlay-put overlay 'face (ahs-current-plugin-prop 'face))
     (mapc '(lambda(x)
              (overlay-put overlay x ahs-modification-hook-list))
           '(modification-hooks insert-in-front-hooks insert-behind-hooks))
@@ -799,7 +809,7 @@ has 3 different ways.
     (ahs-edit-mode nil)))
 
 (defun ahs-edit-mode-on (temporary)
-  "Edit mode on"
+  "Turn `ON' Edit mode."
   (when temporary
     (let ((ahs-current-range ahs-range-whole-buffer)
           (ahs-start-point)
@@ -808,18 +818,20 @@ has 3 different ways.
       ;; need font-lock-fontify-region ?
       (ahs-idle-function)))
   (setq ahs-edit-mode-enable t)
-  (let ((beg (overlay-start ahs-current-overlay))
-        (end (overlay-end ahs-current-overlay)))
-    (delete-overlay ahs-current-overlay)
-    (ahs-highlight-current-symbol beg end))
+  (overlay-put ahs-current-overlay 'face ahs-edit-mode-face)
   (remove-hook 'pre-command-hook 'ahs-unhighlight t)
   (add-hook 'post-command-hook 'ahs-edit-post-command-hook-function nil t)
   (run-hooks 'ahs-edit-mode-on-hook))
 
-(defun ahs-edit-mode-off ()
-  "Edit mode off"
+(defun ahs-edit-mode-off (force)
+  "Turn `OFF' Edit mode."
   (setq ahs-edit-mode-enable nil)
-  (ahs-remove-all-overlay)
+  (if (and (not force)
+           (ahs-inside-overlay-p ahs-current-overlay))
+      (progn
+        (overlay-put ahs-current-overlay 'face (ahs-current-plugin-prop 'face))
+        (add-hook 'pre-command-hook 'ahs-unhighlight nil t))
+    (ahs-remove-all-overlay))
   (remove-hook 'post-command-hook 'ahs-edit-post-command-hook-function t)
   (run-hooks 'ahs-edit-mode-off-hook))
 
@@ -846,8 +858,7 @@ has 3 different ways.
         (dolist (overlay hidden)
           (ahs-open-invisible-overlay-temporary overlay)))
       (goto-char (+ beg (- (point) now)))
-      (delete-overlay ahs-current-overlay)
-      (ahs-highlight-current-symbol beg end)
+      (move-overlay ahs-current-overlay beg end)
       (when (equal ahs-select-invisible 'immediate)
         (ahs-close-unnecessary-overlays)))))
 
@@ -977,7 +988,7 @@ has 3 different ways.
   "Internal function of ahs-change-range"
   (setq ahs-current-range (symbol-value plugin))
   (save-excursion
-	(font-lock-fontify-region (point-min) (point-max))) ;; font-lock...orz
+	(font-lock-fontify-region (point-min) (point-max))) ;; ...orz   any better way?
   (ahs-current-plugin-prop 'init))
 
 (defun ahs-change-range (&optional range nomsg)
@@ -1008,7 +1019,8 @@ has 3 different ways.
     (unless nomsg
       (if error
           (message error)
-        (message "changed to `%s'." (ahs-current-plugin-prop 'name))))
+        (message "changed to `%s'." (ahs-current-plugin-prop 'name))
+        (ahs-idle-function)))
     (ahs-set-lighter)))
 
 (defun ahs-goto-web ()
@@ -1066,7 +1078,7 @@ has 3 different ways.
              ahs-highlighted)
     (if arg
         (ahs-edit-mode-on temporary)
-      (ahs-edit-mode-off))
+      (ahs-edit-mode-off force-off))
     (ahs-set-lighter)))
 
 ;;;###autoload
@@ -1084,31 +1096,6 @@ has 3 different ways.
     (ahs-clear)))
 
 ;;
-;; (@* "Protect overlay" )
-;;
-(defvar ahs-ac-active-flag nil)
-(make-variable-buffer-local 'ahs-ac-active-flag)
-
-(defun ahs-avoid-auto-complete-menu ()
-  "Avoid auto-complete-mode menu for protect overlay"
-  (when (featurep 'auto-complete)
-    (setq ahs-ac-active-flag
-          (or ahs-ac-active-flag
-              (assoc-default 'auto-complete-mode (buffer-local-variables))))
-    (when ahs-ac-active-flag
-      (auto-complete-mode 0))))
-
-(defun ahs-recover-auto-complete ()
-  "Recover auto-complete-mode"
-  (when (and (featurep 'auto-complete)
-             ahs-ac-active-flag)
-    (auto-complete-mode t)
-    (setq ahs-ac-active-flag nil)))
-
-(add-hook 'ahs-edit-mode-on-hook  'ahs-avoid-auto-complete-menu)
-(add-hook 'ahs-edit-mode-off-hook 'ahs-recover-auto-complete)
-
-;;
 ;; (@* "Revert" )
 ;;
 ;; Remove overlay and exit edit mode before revert-buffer
@@ -1123,6 +1110,6 @@ has 3 different ways.
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 68:8f15e56364be 2010-11-03 22:17 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 70:542ae42370e4 2010-11-04 12:52 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
