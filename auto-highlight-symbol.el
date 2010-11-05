@@ -4,7 +4,7 @@
 ;; Created date 2009-03-03 21:44 +0900
 
 ;; Author: Mitsuo Saito <arch320@NOSPAM.gmail.com>
-;; Version: 1.53
+;; Version: 1.54RC
 ;; Keywords: face match convenience
 ;; URL: http://github.com/mitsuo-saito/auto-highlight-symbol-mode/raw/master/auto-highlight-symbol.el
 ;; Compatibility: GNU Emacs 22.3 23.x 24.x later
@@ -124,9 +124,9 @@
 ;;    Select highlighted symbols forwardly.
 ;;  `ahs-backward'
 ;;    Select highlighted symbols backwardly.
-;;  `ahs-forward-defined'
+;;  `ahs-forward-definition'
 ;;    Select highlighted symbols forwardly. only symbol definition.
-;;  `ahs-backward-defined'
+;;  `ahs-backward-definition'
 ;;    Select highlighted symbols backwardly. only symbol definition.
 ;;  `ahs-back-to-start'
 ;;    Go back to the highlighting start point.
@@ -169,7 +169,7 @@
 ;;    Face list of inhibit highlighting
 ;;  `ahs-invisible-face-list'
 ;;    Face list of not highlighting. make overlay only.
-;;  `ahs-defined-face-list'
+;;  `ahs-definition-face-list'
 ;;    Face list of symbol definition face
 ;;  `ahs-include'
 ;;    Include symbol regular expression pattern.
@@ -182,14 +182,19 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 72:654d8c9978e3 tip $
+;;   $Revision: 76:2a4be7fc4b94 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Thu, 04 Nov 2010 18:27:33 +0900 $
+;;   $LastModified: Fri, 05 Nov 2010 23:14:32 +0900 $
 ;;
-;;   $Lastlog: some fix $
+;;   $Lastlog: 1.54RC $
 ;;
 
 ;;; Changelog
+;;
+;; v1.54RC
+;;   refactor
+;;   minor bug fix
+;;   cosmetics
 ;;
 ;; v1.53 2010-11-03 22:17 +0900
 ;;   improve invisible overlay's handling
@@ -222,10 +227,12 @@
 ;;   first release
 ;;
 
-;;; TODO:
+;;; (@* "TODO" )
 ;;
 ;;  fix font-lock-fontify  !!MUST BE FIX!!
-;;  refactor
+;;  more refactor
+;;  fix poor doc
+;;
 ;;  sticky highlight??
 ;;
 
@@ -240,7 +247,7 @@
 (eval-and-compile
   (defconst ahs-web "http://github.com/mitsuo-saito/auto-highlight-symbol-mode/"))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 72:654d8c9978e3 2010-11-04 18:27 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 76:2a4be7fc4b94 2010-11-05 23:14 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -302,7 +309,7 @@
 (defvar ahs-wmode-lighter nil
   "Do not use. obsolete")
 
-(defcustom ahs-edit-mode-lighter " *HSE*"
+(defcustom ahs-edit-mode-lighter "*HSE*"
   "Edit mode lighter"
   :group 'auto-highlight-symbol
   :type 'string)
@@ -326,18 +333,17 @@
 
 When the value is
   `open'      Open hidden text permanently.
-  `temporary' Open hidden text. Close when unhighlight.
-  `immediate' Open hidden text. Close when leaving the opened text immediately.
+  `temporary' Open hidden text. When unhighlight, close all opened text.
+  `immediate' Open hidden text. When leaving opened text, close immediately.
   `skip'      Skip symbol.
 
-Affects only overlay has a property `isearch-open-invisible'.
-Because i don't know how to open\(delete) overlay."
+Affects only overlay has a property `isearch-open-invisible'."
 
   :group 'auto-highlight-symbol
   :type '(choice (symbol :tag "Open hidden text permanently." open)
-                 (symbol :tag "Open hidden text. Close when unhighlight." temporary)
+                 (symbol :tag "Open hidden text temporary." temporary)
                  (symbol :tag "Open hidden text. Close immediately." immediate)
-                 (symbol :tag "Skip when symbol in hidden text." skip)))
+                 (symbol :tag "Skip all symbol in hidden text." skip)))
 
 (defcustom auto-highlight-symbol-mode-hook nil
   "Hook for `auto-highlight-symbol-mode'."
@@ -398,14 +404,16 @@ Because i don't know how to open\(delete) overlay."
   :group 'auto-highlight-symbol
   :type  '(repeat symbol))
 
-(defcustom ahs-defined-face-list
+(defcustom ahs-definition-face-list
   '(
     font-lock-function-name-face
     font-lock-variable-name-face
+    semantic-highlight-func-current-tag-face
     )
   "Face list of symbol definition face"
   :group 'auto-highlight-symbol
   :type  '(repeat symbol))
+(defalias 'ahs-defined-face-list 'ahs-definition-face-list)
 
 (defface ahs-face
   '((t (:foreground "GhostWhite" :background "LightYellow4")))
@@ -413,11 +421,12 @@ Because i don't know how to open\(delete) overlay."
   :group 'auto-highlight-symbol)
 (defvar ahs-face 'ahs-face)
 
-(defface ahs-defined-face
+(defface ahs-definition-face
   '((t (:foreground "moccasin" :background "CadetBlue" :underline t)))
   "Face of highlighted symbol definition"
   :group 'auto-highlight-symbol)
-(defvar ahs-defined-face 'ahs-defined-face)
+(defvar ahs-definition-face 'ahs-definition-face)
+(defalias 'ahs-defined-face 'ahs-definition-face)
 
 (defface ahs-plugin-defalt-face
   '((t (:foreground "Black" :background "Orange1")))
@@ -434,7 +443,7 @@ Because i don't know how to open\(delete) overlay."
 
 (defface ahs-plugin-bod-face
   '((t (:foreground "Black" :background "DodgerBlue")))
-  "Face of `beginning-of-defun' range"
+  "Face of `beginning of defun' range"
   :group 'auto-highlight-symbol)
 (defvar ahs-plugin-bod-face 'ahs-plugin-bod-face)
 
@@ -495,13 +504,13 @@ has 3 different ways.
 (if auto-highlight-symbol-mode-map
     nil
   (setq auto-highlight-symbol-mode-map (make-sparse-keymap))
-  (define-key auto-highlight-symbol-mode-map (kbd "M-<left>"    ) 'ahs-backward        )
-  (define-key auto-highlight-symbol-mode-map (kbd "M-<right>"   ) 'ahs-forward         )
-  (define-key auto-highlight-symbol-mode-map (kbd "M-S-<left>"  ) 'ahs-backward-defined)
-  (define-key auto-highlight-symbol-mode-map (kbd "M-S-<right>" ) 'ahs-forward-defined )
-  (define-key auto-highlight-symbol-mode-map (kbd "M--"         ) 'ahs-back-to-start   )
-  (define-key auto-highlight-symbol-mode-map (kbd "C-x C-'"     ) 'ahs-change-range    )
-  (define-key auto-highlight-symbol-mode-map (kbd "C-x C-a"     ) 'ahs-edit-mode       ))
+  (define-key auto-highlight-symbol-mode-map (kbd "M-<left>"    ) 'ahs-backward           )
+  (define-key auto-highlight-symbol-mode-map (kbd "M-<right>"   ) 'ahs-forward            )
+  (define-key auto-highlight-symbol-mode-map (kbd "M-S-<left>"  ) 'ahs-backward-definition)
+  (define-key auto-highlight-symbol-mode-map (kbd "M-S-<right>" ) 'ahs-forward-definition )
+  (define-key auto-highlight-symbol-mode-map (kbd "M--"         ) 'ahs-back-to-start      )
+  (define-key auto-highlight-symbol-mode-map (kbd "C-x C-'"     ) 'ahs-change-range       )
+  (define-key auto-highlight-symbol-mode-map (kbd "C-x C-a"     ) 'ahs-edit-mode          ))
 
 ;;
 ;; (@* "Internal variable" )
@@ -625,15 +634,18 @@ has 3 different ways.
    (end     . point-max))
  "Whole buffer")
 
+;; beginning-of-defun
 (defvar ahs-plugin-bod-start nil)
 (defvar ahs-plugin-bod-end nil)
+(defvar ahs-plugin-bod-modes
+  '(emacs-lisp-mode lisp-interaction-mode c++-mode c-mode))
 
 (ahs-regist-range-plugin
  beginning-of-defun
  '((name          . "beginning of defun")
    (lighter       . "HSD")
    (face          . ahs-plugin-bod-face)
-   (major-mode    . (emacs-lisp-mode lisp-interaction-mode c++-mode c-mode))
+   (major-mode    . ahs-plugin-bod-modes)
    (before-search . (lambda(x)
                       (save-excursion
                         (let ((opoint (point)))
@@ -683,23 +695,23 @@ has 3 different ways.
                  (ahs-symbol-p ahs-include symbol))
         (ahs-highlight symbol start end)))))
 
-(defun ahs-symbol-p (predicate symbol &optional nodefs)
+(defun ahs-symbol-p (pred symbol &optional nodefs)
   "*Non-nil means include/exclude symbol"
-  (cond ((null predicate) ;; default include/no exclude
+  (cond ((null pred) ;; default include/no exclude
          (unless nodefs
            (let ((case-fold-search ahs-case-fold-search))
              (string-match ahs-default-symbol-regexp symbol))))
 
-        ((stringp predicate) ;; standard-regexp
+        ((stringp pred) ;; standard-regexp
          (let ((case-fold-search ahs-case-fold-search))
-           (string-match predicate symbol)))
+           (string-match pred symbol)))
 
-        ((listp predicate) ;; major mode decision
-         (let ((predicate (cdr (assoc major-mode predicate))))
-           (ahs-symbol-p predicate symbol nodefs)))
+        ((listp pred) ;; major mode decision
+         (let ((pred (cdr (assoc major-mode pred))))
+           (ahs-symbol-p pred symbol nodefs)))
 
-        ((functionp predicate) ;; function predicate
-         (funcall predicate symbol))))
+        ((functionp pred) ;; function predicate
+         (funcall pred symbol))))
 
 (defun ahs-dropdown-list-p ()
   "Disable highlighting when expand dropdown-list"
@@ -718,7 +730,7 @@ has 3 different ways.
 ;; (@* "Highlight" )
 ;;
 (defun ahs-highlight (symbol start end)
-  "Highlight"
+  "Highlight Core"
   (if (equal 'abort (ahs-current-plugin-prop 'before-search symbol))
       nil
     (save-excursion
@@ -740,8 +752,8 @@ has 3 different ways.
               (overlay-put overlay 'ahs-symbol t)
               (unless (memq pface ahs-invisible-face-list)
                 (overlay-put overlay 'face
-                             (if (memq pface ahs-defined-face-list)
-                                 ahs-defined-face
+                             (if (memq pface ahs-definition-face-list)
+                                 ahs-definition-face
                                ahs-face)))
               (push overlay ahs-overlay-list))))))
     (when ahs-overlay-list
@@ -759,8 +771,8 @@ has 3 different ways.
                   ahs-edit-mode
                   ahs-forward
                   ahs-backward
-                  ahs-forward-defined
-                  ahs-backward-defined
+                  ahs-forward-definition
+                  ahs-backward-definition
                   ahs-back-to-start
                   ))
     (ahs-remove-all-overlay)
@@ -779,8 +791,8 @@ has 3 different ways.
 
 (defun ahs-remove-all-overlay ()
   "Remove all overlay"
-  (mapc 'delete-overlay ahs-overlay-list)
   (delete-overlay ahs-current-overlay)
+  (mapc 'delete-overlay ahs-overlay-list)
   (mapc 'ahs-open-necessary-overlay ahs-opened-overlay-list)
   (setq ahs-highlighted         nil
         ahs-current-overlay     nil
@@ -846,29 +858,38 @@ has 3 different ways.
 ;;
 ;; (@* "Select" )
 ;;
-(defun ahs-select (predicate candidate)
+(defun ahs-select (pred &optional reverse onlydef)
   "Select highlighted symbols"
-  (when (and ahs-highlighted
-             (setq candidate
-                   (ahs-remove-invisible
-                    candidate
-                    (equal ahs-select-invisible 'skip))))
-    (let* ((now (overlay-start ahs-current-overlay))
-           (next (or (loop for x in candidate
-                           when (funcall predicate now x)
-                           return x)
-                     (car candidate)))
+  (when ahs-highlighted
+    (let* ((start)
+           (next (loop for overlay in (if reverse
+                                          (reverse ahs-overlay-list)
+                                        ahs-overlay-list)
+                       for skip = (loop for hidden in (overlays-at (overlay-start overlay))
+                                        when (and (overlay-get hidden 'invisible)
+                                                  (or (equal ahs-select-invisible 'skip)
+                                                      (not (overlay-get hidden 'isearch-open-invisible))))
+                                        return hidden)
+                       for selectable = (and (not skip)
+                                             (or (not onlydef)
+                                                 (ahs-definition-p overlay)))
+                       when selectable append (list overlay) into start
+                       when (and selectable (funcall pred overlay))
+                       return overlay
+                       finally return (if (null (car start))
+                                          ahs-current-overlay
+                                        (car start))))
            (beg (overlay-start next))
            (end (overlay-end next))
-           (hidden (unless (equal ahs-select-invisible 'skip)
-                     (ahs-get-openable-overlay next))))
-      (when hidden
-        (dolist (overlay hidden)
+           (hidden-list (unless (equal ahs-select-invisible 'skip)
+                          (ahs-get-openable-overlay next))))
+      (when hidden-list
+        (dolist (overlay hidden-list)
           (ahs-open-invisible-overlay-temporary overlay)))
-      (goto-char (+ beg (- (point) now)))
-      (move-overlay ahs-current-overlay beg end)
-      (when (equal ahs-select-invisible 'immediate)
-        (ahs-close-unnecessary-overlays)))))
+      (goto-char (+ beg (- (point) (overlay-start ahs-current-overlay))))
+      (move-overlay ahs-current-overlay beg end))
+    (when (equal ahs-select-invisible 'immediate)
+      (ahs-close-unnecessary-overlays))))
 
 (defun ahs-get-openable-overlay (pos)
   "Get openable overlays list."
@@ -904,10 +925,8 @@ has 3 different ways.
         (ahs-store-property overlay 'isearch-intangible 'intangible))
       (if (or inside-overlay
               (equal ahs-select-invisible 'open))
-          (when func
-            (funcall func overlay))
-        (when func-temp
-          (funcall func-temp overlay t))))))
+          (when func (funcall func overlay))
+        (when func-temp (funcall func-temp overlay t))))))
 
 ;; modified from isearch.el
 (defun ahs-open-invisible-overlay-temporary (overlay)
@@ -924,38 +943,12 @@ has 3 different ways.
   (overlay-put overlay to (overlay-get overlay from))
   (overlay-put overlay from nil))
 
-(defun ahs-collect-difinition (candidate)
-  "Collect difinition"
-  (loop for x in candidate
-        when (ahs-defined-p x)
-        collect x))
-
-(defun ahs-remove-invisible (candidate skip)
-  "Remove invisible"
-  (loop for x in candidate
-        unless (ahs-invisible-p (overlay-start x) skip)
-        collect x))
-
-(defun ahs-always-t-p (x y) t)
-(defun ahs-forward-p  (x y) (< x (overlay-start y)))
-(defun ahs-backward-p (x y) (> x (overlay-start y)))
-(defun ahs-defined-p  (x)   (eq (overlay-get x 'face) 'ahs-defined-face))
-
-(defun ahs-invisible-p (x y)
-  (loop for overlay in (overlays-at x)
-        when (overlay-get overlay 'invisible)
-        when (or y
-                 (not (overlay-get overlay 'isearch-open-invisible)))
-        return overlay))
-
-(defun ahs-overlay-p (x)
-  (loop for overlay in (overlays-at x)
-        when (overlay-get overlay 'ahs-symbol)
-        return overlay))
-
-(defun ahs-inside-overlay-p (x)
-  (and (>= (point) (overlay-start x))
-       (<= (point) (overlay-end x))))
+;; no doc xD
+(defun ahs-forward-p        (x) (< (overlay-start ahs-current-overlay) (overlay-start x)))
+(defun ahs-backward-p       (x) (> (overlay-start ahs-current-overlay) (overlay-start x)))
+(defun ahs-definition-p     (x) (eq (overlay-get x 'face) 'ahs-definition-face))
+(defun ahs-start-point-p    (x) (equal (overlay-start x) ahs-start-point))
+(defun ahs-inside-overlay-p (x) (and (>= (point) (overlay-start x)) (<= (point) (overlay-end x))))
 
 ;;
 ;; (@* "Interactive" )
@@ -963,28 +956,29 @@ has 3 different ways.
 (defun ahs-forward ()
   "Select highlighted symbols forwardly."
   (interactive)
-  (ahs-select 'ahs-forward-p (reverse ahs-overlay-list)))
+  (ahs-select 'ahs-forward-p t))
 
 (defun ahs-backward ()
   "Select highlighted symbols backwardly."
   (interactive)
-  (ahs-select 'ahs-backward-p ahs-overlay-list))
+  (ahs-select 'ahs-backward-p))
 
-(defun ahs-forward-defined ()
+(defun ahs-forward-definition ()
   "Select highlighted symbols forwardly. only symbol definition."
   (interactive)
-  (ahs-select 'ahs-forward-p (reverse (ahs-collect-difinition ahs-overlay-list))))
+  (ahs-select 'ahs-forward-p t t))
+(defalias 'ahs-forward-defined 'ahs-forward-definition)
 
-(defun ahs-backward-defined ()
+(defun ahs-backward-definition ()
   "Select highlighted symbols backwardly. only symbol definition."
   (interactive)
-  (ahs-select 'ahs-backward-p (ahs-collect-difinition ahs-overlay-list)))
+  (ahs-select 'ahs-backward-p nil t))
+(defalias 'ahs-backward-defined 'ahs-backward-definition)
 
 (defun ahs-back-to-start ()
   "Go back to the highlighting start point."
   (interactive)
-  (when ahs-start-point
-    (ahs-select 'ahs-always-t-p (list (ahs-overlay-p ahs-start-point)))))
+  (ahs-select 'ahs-start-point-p))
 
 (defun ahs-set-idle-interval (secs)
   "Set wait until highlighting symbol when emacs is idle."
@@ -996,7 +990,7 @@ has 3 different ways.
   "Internal function of ahs-change-range"
   (setq ahs-current-range (symbol-value plugin))
   (save-excursion
-	(font-lock-fontify-region (point-min) (point-max))) ;; ...orz   any better way?
+    (font-lock-fontify-region (point-min) (point-max))) ;; ...orz   any better way?
   (ahs-current-plugin-prop 'init))
 
 (defun ahs-change-range (&optional range nomsg)
@@ -1004,31 +998,30 @@ has 3 different ways.
   (interactive)
   (ahs-clear)
   (let* ((current)
-         (error)
+         (error-msg)
          (available (loop for x in ahs-range-plugin-list
                           for plugin = (symbol-value x)
                           for mode = (ahs-get-plugin-prop 'major-mode plugin)
+                          when (equal plugin ahs-current-range) do (setq current x)
                           when (or (equal 'none mode)
                                    (and (listp mode)
                                         (memq major-mode mode))
                                    (eq major-mode mode))
                           when (ahs-get-plugin-prop 'condition plugin)
-                          collect x
-                          do (when (equal plugin ahs-current-range)
-                               (setq current x))))
+                          collect x))
          (next (cadr (memq current available))))
     (if range
         (if (memq range available)
             (ahs-change-range-internal range)
-          (setq error (format "`%s' incorrect major-mode or condition property is nil. nothing to change."
+          (setq error-msg (format "`%s' incorrect major-mode or condition property is nil. nothing to change."
                               (ahs-get-plugin-prop 'name (symbol-value range)))))
-      (ahs-change-range-internal (if next next
-                                   (car available))))
+      (ahs-change-range-internal (if next next (car available))))
     (unless nomsg
-      (if error
-          (message error)
-        (message "changed to `%s'." (ahs-current-plugin-prop 'name))
-        (ahs-idle-function)))
+      (if error-msg
+          (message error-msg)
+        (message "changed to `%s'." (ahs-current-plugin-prop 'name))))
+    (when (called-interactively-p 'any)
+      (ahs-idle-function))
     (ahs-set-lighter)))
 
 (defun ahs-goto-web ()
@@ -1051,8 +1044,10 @@ has 3 different ways.
 (defun ahs-set-lighter ()
   "Set mode line lighter"
   (setq ahs-mode-line
-        (cond ((or ahs-edit-mode-enable) ahs-edit-mode-lighter)
-              (t (concat " " (ahs-current-plugin-prop 'lighter)))))
+        (concat " "
+                (if ahs-edit-mode-enable
+                    ahs-edit-mode-lighter
+                  (ahs-current-plugin-prop 'lighter))))
   (force-mode-line-update))
 
 (defun ahs-init ()
@@ -1075,18 +1070,18 @@ has 3 different ways.
            (memq major-mode ahs-modes))
       (auto-highlight-symbol-mode t)))
 
-(defun ahs-edit-mode (arg &optional temporary force-off)
+(defun ahs-edit-mode (arg &optional temporary force)
   "Turn on edit mode. if call with prefix-args , change range to `whole buffer' temporary."
   (interactive
    (if ahs-edit-mode-enable
        (list nil)
      (list t current-prefix-arg)))
-  (when (and (or auto-highlight-symbol-mode force-off)
+  (when (and (or auto-highlight-symbol-mode force)
              (not buffer-read-only)
              ahs-highlighted)
     (if arg
         (ahs-edit-mode-on temporary)
-      (ahs-edit-mode-off force-off))
+      (ahs-edit-mode-off force))
     (ahs-set-lighter)))
 
 ;;;###autoload
@@ -1118,6 +1113,6 @@ has 3 different ways.
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 72:654d8c9978e3 2010-11-04 18:27 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 76:2a4be7fc4b94 2010-11-05 23:14 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here

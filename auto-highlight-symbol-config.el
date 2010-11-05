@@ -6,7 +6,7 @@
 ;; Author: Mitsuo Saito <arch320@NOSPAM.gmail.com>
 ;; Keywords: face match convenience
 ;; URL: http://github.com/mitsuo-saito/auto-highlight-symbol-mode/raw/master/auto-highlight-symbol-config.el
-;; Compatibility: GNU Emacs 23.x 24.x later
+;; Compatibility: GNU Emacs 22.3 23.x 24.x later
 ;;
 ;; This file is NOT part of GNU Emacs.
 
