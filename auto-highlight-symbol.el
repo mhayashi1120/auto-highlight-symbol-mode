@@ -4,7 +4,7 @@
 ;; Created date 2009-03-03 21:44 +0900
 
 ;; Author: Mitsuo Saito <arch320@NOSPAM.gmail.com>
-;; Version: 1.54RC
+;; Version: 1.54 beta
 ;; Keywords: face match convenience
 ;; URL: http://github.com/mitsuo-saito/auto-highlight-symbol-mode/raw/master/auto-highlight-symbol.el
 ;; Compatibility: GNU Emacs 22.3 23.x 24.x later
@@ -151,8 +151,8 @@
 ;;
 ;;  `ahs-modes'
 ;;    Major modes `auto-highlight-symbol-mode' can run on.
-;;  `ahs-edit-mode-lighter'
-;;    Mode line lighter in edit mode.
+;;  `ahs-edit-mode-lighter-pair'
+;;    Decorate mode line lighter in edit mode.
 ;;  `ahs-case-fold-search'
 ;;    *Non-nil means case fold search.
 ;;  `ahs-default-range'
@@ -184,16 +184,16 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 78:29563e1b5c4c tip $
+;;   $Revision: 80:a1dba0f4538c tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sat, 06 Nov 2010 12:08:57 +0900 $
+;;   $LastModified: Sat, 06 Nov 2010 19:30:28 +0900 $
 ;;
-;;   $Lastlog: compat22.3 $
+;;   $Lastlog: font lock 1 $
 ;;
 
 ;;; Changelog
 ;;
-;; v1.54RC
+;; v1.54 beta
 ;;   refactor
 ;;   minor bug fix
 ;;   cosmetics
@@ -241,15 +241,20 @@
 ;;; Code:
 
 (eval-when-compile
-  ;; suppress bytecompiler error warning
+  ;; Suppress bytecompiler error warning
   (require 'easy-mmode)
   (require 'cl)
   (defvar dropdown-list-overlays nil))
 
 (eval-and-compile
-  (defconst ahs-web "http://github.com/mitsuo-saito/auto-highlight-symbol-mode/"))
+  (defconst ahs-web "http://github.com/mitsuo-saito/auto-highlight-symbol-mode/") ;; :D
+  ;; Compatibility for GNU Emacs 22.3
+  (if (>= emacs-major-version 23)
+      (defalias 'ahs-called-interactively-p 'called-interactively-p)
+    (defmacro ahs-called-interactively-p (&optional arg)
+      '(called-interactively-p))))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 78:29563e1b5c4c 2010-11-06 12:08 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 80:a1dba0f4538c 2010-11-06 19:30 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -311,10 +316,16 @@
 (defvar ahs-wmode-lighter nil
   "Obsolete. Do not use.")
 
-(defcustom ahs-edit-mode-lighter "*HSE*"
-  "Mode line lighter in edit mode."
+(defvar ahs-edit-mode-lighter nil
+  "Obsolete. Do not use.")
+
+(defcustom ahs-edit-mode-lighter-pair '( "*" . "*" )
+  "Decorate mode line lighter in edit mode."
   :group 'auto-highlight-symbol
-  :type 'string)
+  :type '(choice (cons :tag "Asterisk"    (string "*") (string "*"))
+                 (cons :tag "Exclamation" (string "!") (string "!"))
+                 (cons :tag "DANGEROUS"   (string "DANGER->") (string "<-DANGER"))
+                 (cons :tag "Silence!!"   (string "") (string ""))))
 
 (defcustom ahs-case-fold-search t
   "*Non-nil means case fold search."
@@ -342,10 +353,10 @@ When the value is
 Affects only overlay\(hidden text) has a property `isearch-open-invisible'."
 
   :group 'auto-highlight-symbol
-  :type '(choice (symbol :tag "Open hidden text permanently." open)
-                 (symbol :tag "Open hidden text temporary." temporary)
+  :type '(choice (symbol :tag "Open hidden text permanently."         open)
+                 (symbol :tag "Open hidden text temporary."           temporary)
                  (symbol :tag "Open hidden text only when necessary." immediate)
-                 (symbol :tag "Skip all symbol in hidden text." skip)))
+                 (symbol :tag "Skip all symbol in hidden text."       skip)))
 
 (defcustom auto-highlight-symbol-mode-hook nil
   "Hook for `auto-highlight-symbol-mode'."
@@ -475,7 +486,7 @@ has 3 different ways.
    if major mode not in list , use ahs-default-symbol-regexp"
 
   :group 'auto-highlight-symbol
-  :type '(choice (string   :tag "Regexp" ahs-default-symbol-regexp)
+  :type '(choice (regexp   :tag "Regexp" ahs-default-symbol-regexp)
                  (function :tag "Function" (lambda(symbol) t))
                  (alist    :tag "alist")))
 
@@ -493,7 +504,7 @@ has 3 different ways.
    if major mode not in list , no symbols exclude."
 
   :group 'auto-highlight-symbol
-  :type '(choice (string   :tag "Regexp" "exclude regexp")
+  :type '(choice (regexp   :tag "Regexp" "exclude regexp")
                  (function :tag "Function" (lambda(symbol) nil))
                  (alist    :tag "alist")))
 
@@ -505,14 +516,16 @@ has 3 different ways.
 
 (if auto-highlight-symbol-mode-map
     nil
-  (setq auto-highlight-symbol-mode-map (make-sparse-keymap))
-  (define-key auto-highlight-symbol-mode-map (kbd "M-<left>"    ) 'ahs-backward           )
-  (define-key auto-highlight-symbol-mode-map (kbd "M-<right>"   ) 'ahs-forward            )
-  (define-key auto-highlight-symbol-mode-map (kbd "M-S-<left>"  ) 'ahs-backward-definition)
-  (define-key auto-highlight-symbol-mode-map (kbd "M-S-<right>" ) 'ahs-forward-definition )
-  (define-key auto-highlight-symbol-mode-map (kbd "M--"         ) 'ahs-back-to-start      )
-  (define-key auto-highlight-symbol-mode-map (kbd "C-x C-'"     ) 'ahs-change-range       )
-  (define-key auto-highlight-symbol-mode-map (kbd "C-x C-a"     ) 'ahs-edit-mode          ))
+  (setq auto-highlight-symbol-mode-map
+        (let ((map (make-sparse-keymap)))
+          (define-key map (kbd "M-<left>"    ) 'ahs-backward            )
+          (define-key map (kbd "M-<right>"   ) 'ahs-forward             )
+          (define-key map (kbd "M-S-<left>"  ) 'ahs-backward-definition )
+          (define-key map (kbd "M-S-<right>" ) 'ahs-forward-definition  )
+          (define-key map (kbd "M--"         ) 'ahs-back-to-start       )
+          (define-key map (kbd "C-x C-'"     ) 'ahs-change-range        )
+          (define-key map (kbd "C-x C-a"     ) 'ahs-edit-mode           )
+          map)))
 
 ;;
 ;; (@* "Internal variable" )
@@ -521,7 +534,6 @@ has 3 different ways.
   "Dummy for suppress bytecompiler warning.")
 
 (defconst ahs-modification-hook-list '( ahs-modification-hook-function ))
-;;(defconst ahs-interactively-p '(called-interactively-p 'any)
 
 (defvar ahs-range-plugin-list nil
   "List of installed range plugin.")
@@ -544,13 +556,6 @@ has 3 different ways.
 (make-variable-buffer-local 'ahs-overlay-list        )
 (make-variable-buffer-local 'ahs-opened-overlay-list )
 (make-variable-buffer-local 'ahs-start-point         )
-
-;; Compatibility for GNU Emacs 22.3
-(eval-and-compile
-  (if (>= emacs-major-version 23)
-      (defalias 'ahs-called-interactively-p 'called-interactively-p)
-    (defmacro ahs-called-interactively-p (&optional arg)
-      '(called-interactively-p))))
 
 ;;
 ;; (@* "Range plugin" )
@@ -683,14 +688,14 @@ has 3 different ways.
 ;;
 (defun ahs-idle-function ()
   "Idle function"
-  (when auto-highlight-symbol-mode
+  (when (and auto-highlight-symbol-mode
+             (not ahs-highlighted))
     (let* ((bounds (bounds-of-thing-at-point 'symbol))
            (beg (car bounds))
            (end (cdr bounds))
            (symbol (when bounds
                      (buffer-substring-no-properties beg end))))
       (when (and bounds
-                 (not ahs-highlighted)
                  (not (ahs-dropdown-list-p))
                  (not (ahs-inhibit-face-p (get-char-property (point) 'face)))
                  (not (ahs-symbol-p ahs-exclude symbol t))
@@ -801,30 +806,30 @@ has 3 different ways.
 ;;
 ;; (@* "Edit mode" )
 ;;
-(defun ahs-modification-hook-function (overlay after beg end &optional length)
+(defun ahs-modification-hook-function (overlay after debut fin &optional length)
   "Overlay's `modification-hook' used in edit mode."
   (when (and after
              ahs-edit-mode-enable)
-    (let ((chs (if (overlayp overlay)
+    (let ((source (if (overlayp overlay)
                    (buffer-substring-no-properties (overlay-start overlay)
-                                                   (overlay-end overlay))
+                                     (overlay-end overlay))
                  "")))
-      (dolist (ov ahs-overlay-list)
-        (when (overlayp ov)
-          (let* ((os (overlay-start ov))
-                 (oe (overlay-end ov))
-                 (len (- oe os))
-                 (ohs (buffer-substring-no-properties os oe)))
-            (unless (equal chs ohs)
+      (dolist (change ahs-overlay-list)
+        (when (overlayp change)
+          (let* ((beg (overlay-start change))
+                 (end (overlay-end change))
+                 (len (- end beg))
+                 (target (buffer-substring-no-properties beg end)))
+            (unless (equal source target)
               (save-excursion
-                (goto-char os)
-                (insert chs)
+                (goto-char beg)
+                (insert source)
                 (delete-char len)))))))))
 
 (defun ahs-edit-post-command-hook-function ()
   "`post-command-hook' used in edit mode."
-  (when (or (null (overlay-start ahs-current-overlay))
-            (not (ahs-inside-overlay-p ahs-current-overlay)))
+  (unless (and (overlayp ahs-current-overlay)
+               (ahs-inside-overlay-p ahs-current-overlay))
     (ahs-edit-mode nil)))
 
 (defun ahs-edit-mode-on (temporary)
@@ -844,6 +849,12 @@ has 3 different ways.
 (defun ahs-edit-mode-off (force)
   "Turn `OFF' edit mode."
   (setq ahs-edit-mode-enable nil)
+  (save-excursion
+    (mapc '(lambda (x)
+             (font-lock-fontify-region
+              (overlay-start x)
+              (overlay-end x)
+              nil)) ahs-overlay-list))
   (if (and (not force)
            (ahs-inside-overlay-p ahs-current-overlay))
       (progn
@@ -1041,9 +1052,9 @@ has 3 different ways.
   "Set mode line lighter."
   (setq ahs-mode-line
         (concat " "
-                (if ahs-edit-mode-enable
-                    ahs-edit-mode-lighter
-                  (ahs-current-plugin-prop 'lighter))))
+                (when ahs-edit-mode-enable (car ahs-edit-mode-lighter-pair))
+                (ahs-current-plugin-prop 'lighter)
+                (when ahs-edit-mode-enable (cdr ahs-edit-mode-lighter-pair))))
   (force-mode-line-update))
 
 (defun ahs-init ()
@@ -1109,6 +1120,6 @@ has 3 different ways.
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 78:29563e1b5c4c 2010-11-06 12:08 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 80:a1dba0f4538c 2010-11-06 19:30 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
