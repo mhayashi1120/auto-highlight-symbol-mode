@@ -184,11 +184,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 80:a1dba0f4538c tip $
+;;   $Revision: 81:389de071b80e tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sat, 06 Nov 2010 19:30:28 +0900 $
+;;   $LastModified: Sat, 06 Nov 2010 20:03:06 +0900 $
 ;;
-;;   $Lastlog: font lock 1 $
+;;   $Lastlog: font lock 2 $
 ;;
 
 ;;; Changelog
@@ -254,7 +254,7 @@
     (defmacro ahs-called-interactively-p (&optional arg)
       '(called-interactively-p))))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 80:a1dba0f4538c 2010-11-06 19:30 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 81:389de071b80e 2010-11-06 20:03 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -811,9 +811,10 @@ has 3 different ways.
   (when (and after
              ahs-edit-mode-enable)
     (let ((source (if (overlayp overlay)
-                   (buffer-substring-no-properties (overlay-start overlay)
-                                     (overlay-end overlay))
-                 "")))
+                      (buffer-substring-no-properties
+                       (overlay-start overlay)
+                       (overlay-end overlay))
+                    "")))
       (dolist (change ahs-overlay-list)
         (when (overlayp change)
           (let* ((beg (overlay-start change))
@@ -849,12 +850,13 @@ has 3 different ways.
 (defun ahs-edit-mode-off (force)
   "Turn `OFF' edit mode."
   (setq ahs-edit-mode-enable nil)
-  (save-excursion
-    (mapc '(lambda (x)
-             (font-lock-fontify-region
-              (overlay-start x)
-              (overlay-end x)
-              nil)) ahs-overlay-list))
+  (mapc '(lambda (overlay)
+           (let ((beg (overlay-start overlay))
+                 (end (overlay-end overlay)))
+             (when (or (< end (window-start))
+                       (> beg (window-end)))
+               (save-excursion
+                 (font-lock-fontify-region beg end nil))))) ahs-overlay-list)
   (if (and (not force)
            (ahs-inside-overlay-p ahs-current-overlay))
       (progn
@@ -1120,6 +1122,6 @@ has 3 different ways.
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 80:a1dba0f4538c 2010-11-06 19:30 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 81:389de071b80e 2010-11-06 20:03 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
