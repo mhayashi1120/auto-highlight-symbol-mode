@@ -160,11 +160,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 110:d3bfeaabd890 tip $
+;;   $Revision: 111:c5dc115d2ba7 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Tue, 09 Nov 2010 22:23:10 +0900 $
+;;   $LastModified: Wed, 10 Nov 2010 00:35:44 +0900 $
 ;;
-;;   $Lastlog: doc $
+;;   $Lastlog: typo,tweak $
 ;;
 
 ;;; (@* "Changelog" )
@@ -233,7 +233,7 @@
     (defmacro ahs-called-interactively-p (&optional arg)
       '(called-interactively-p))))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 110:d3bfeaabd890 2010-11-09 22:23 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 111:c5dc115d2ba7 2010-11-10 00:35 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -689,7 +689,7 @@ You can do these operations on One Key!
   (ahs-get-plugin-prop prop 'ahs-current-range arg))
 
 (defun ahs-runnable-plugin-p (range)
-  "Return Non-nil if `RANGE' plugin unable to run in current conditions."
+  "Return Non-nil if `RANGE' plugin can run in current conditions."
   (memq range (ahs-runnable-plugins)))
 
 (defun ahs-installed-plugin-p (range)
@@ -969,7 +969,7 @@ You can do these operations on One Key!
   (remove-hook 'post-command-hook 'ahs-edit-post-command-hook-function t)
   (run-hooks 'ahs-edit-mode-off-hook)
 
-  ;; Restore range
+  ;; Restore plugin
   (let ((ahs-suppress-log force))
     (if (not ahs-onekey-range-store)
         (ahs-log 'turn-off-edit-mode)
@@ -999,7 +999,7 @@ You can do these operations on One Key!
      ;; Entering edit mode
      ;;
 
-     ;; No change range
+     ;; No change
      ((and (not ahs-onekey-range-store)
            (eq ahs-current-range (symbol-value range)))
       (let ((ahs-start-point))
@@ -1008,7 +1008,7 @@ You can do these operations on One Key!
           (ahs-edit-mode-on)
           (ahs-set-lighter))))
 
-     ;; Change range temporary
+     ;; Change plugin temporary
      (t
       (ahs-clear)
       (setq ahs-onekey-range-store ahs-current-range)
@@ -1245,6 +1245,9 @@ Limitation:
    (if ahs-edit-mode-enable
        (list nil)
      (list t current-prefix-arg)))
+  (when (and arg
+             (not ahs-highlighted))
+    (ahs-idle-function))
   (when (and (or auto-highlight-symbol-mode force)
              (not buffer-read-only)
              ahs-highlighted)
@@ -1284,6 +1287,6 @@ Limitation:
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 110:d3bfeaabd890 2010-11-09 22:23 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 111:c5dc115d2ba7 2010-11-10 00:35 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
