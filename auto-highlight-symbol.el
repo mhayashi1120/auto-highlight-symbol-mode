@@ -160,11 +160,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 111:c5dc115d2ba7 tip $
+;;   $Revision: 112:8b6513008241 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Wed, 10 Nov 2010 00:35:44 +0900 $
+;;   $LastModified: Wed, 10 Nov 2010 01:29:02 +0900 $
 ;;
-;;   $Lastlog: typo,tweak $
+;;   $Lastlog: minor fix $
 ;;
 
 ;;; (@* "Changelog" )
@@ -233,7 +233,7 @@
     (defmacro ahs-called-interactively-p (&optional arg)
       '(called-interactively-p))))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 111:c5dc115d2ba7 2010-11-10 00:35 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 112:8b6513008241 2010-11-10 01:29 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -947,7 +947,7 @@ You can do these operations on One Key!
 
 (defun ahs-edit-mode-off (force interactive)
   "Turn `OFF' edit mode."
-  ;; Fontify edited region
+  ;; Fontify edited region remove soon...
   (mapc (function
          (lambda (overlay)
            (let ((beg (overlay-start overlay))
@@ -1246,6 +1246,7 @@ Limitation:
        (list nil)
      (list t current-prefix-arg)))
   (when (and arg
+             (not temporary)
              (not ahs-highlighted))
     (ahs-idle-function))
   (when (and (or auto-highlight-symbol-mode force)
@@ -1255,7 +1256,7 @@ Limitation:
         (if temporary
             (ahs-onekey-edit-function 'whole-buffer nil)
           (ahs-edit-mode-on))
-      (ahs-edit-mode-off force (when (ahs-called-interactively-p 'interactive) t)))
+      (ahs-edit-mode-off force (ahs-called-interactively-p 'interactive)))
     (ahs-set-lighter)))
 
 ;;;###autoload
@@ -1287,6 +1288,6 @@ Limitation:
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 111:c5dc115d2ba7 2010-11-10 00:35 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 112:8b6513008241 2010-11-10 01:29 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
