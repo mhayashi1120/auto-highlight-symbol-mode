@@ -115,7 +115,7 @@
 ;;  `ahs-toggle-search-whole-buffer'
 ;;    Obsolete. please use `ahs-change-range' instead.
 ;;  `ahs-edit-mode'
-;;    Turn on edit mode. if call with prefix args , change plugin to `whole buffer' temporary.
+;;    Turn on edit mode. if called with prefix args , change plugin to `whole buffer' temporary.
 ;;  `auto-highlight-symbol-mode'
 ;;    Automatic highlighting current symbol minor mode
 ;;
@@ -160,11 +160,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 114:f98adacb6042 tip $
+;;   $Revision: 115:bad40963963e tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Wed, 10 Nov 2010 12:20:48 +0900 $
+;;   $LastModified: Wed, 10 Nov 2010 13:34:13 +0900 $
 ;;
-;;   $Lastlog: bug fix $
+;;   $Lastlog: minor change $
 ;;
 
 ;;; (@* "Changelog" )
@@ -233,7 +233,7 @@
     (defmacro ahs-called-interactively-p (&optional arg)
       '(called-interactively-p))))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 114:f98adacb6042 2010-11-10 12:20 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 115:bad40963963e 2010-11-10 13:34 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -517,6 +517,7 @@ Settings has three different ways.
     ( onekey-no-symbol-at-point . "No symbol to highlight at point. Current plugin is `%s' now.")
 
     ;; misc
+    ( no-symbol-at-point . "No symbol to highlight at point.")
     )
   "Log data")
 
@@ -900,6 +901,7 @@ You can do these operations on One Key!
   (mapc 'ahs-open-necessary-overlay ahs-opened-overlay-list)
   (setq ahs-highlighted         nil
         ahs-current-overlay     nil
+        ahs-start-point         nil
         ahs-overlay-list        nil
         ahs-opened-overlay-list nil))
 
@@ -945,6 +947,7 @@ You can do these operations on One Key!
   (if ahs-onekey-range-store
       (ahs-log 'onekey-turn-on-edit-mode (ahs-current-plugin-prop 'name))
     (ahs-log 'turn-on-edit-mode))
+
   (ahs-set-lighter))
 
 (defun ahs-edit-mode-off (force interactive)
@@ -1002,10 +1005,9 @@ You can do these operations on One Key!
      ((and (not ahs-onekey-range-store)
            (eq ahs-current-range (symbol-value range)))
       ;; No change
-      (let ((ahs-start-point))
-        (ahs-clear)
-        (when (ahs-idle-function)
-          (ahs-edit-mode-on))))
+      (ahs-clear)
+      (when (ahs-idle-function)
+        (ahs-edit-mode-on)))
      (t
       ;; Change plugin temporary
       (ahs-clear)
@@ -1239,25 +1241,31 @@ Limitation:
       (auto-highlight-symbol-mode t)))
 
 (defun ahs-edit-mode (arg &optional temporary)
-  "Turn on edit mode. if call with prefix args , change plugin to `whole buffer' temporary."
+  "Turn on edit mode. if called with prefix args , change plugin to `whole buffer' temporary."
   (interactive
    (if ahs-edit-mode-enable
        (list nil)
      (list t current-prefix-arg)))
 
   (when (and arg
-             (not temporary)
-             (not ahs-highlighted))
+             (not temporary))
     (ahs-idle-function))
 
-  (when (and auto-highlight-symbol-mode
-             ahs-highlighted
-             (not buffer-read-only))
-    (if arg
-        (if temporary
-            (ahs-onekey-edit-function 'whole-buffer nil)
-          (ahs-edit-mode-on))
-      (ahs-edit-mode-off nil (ahs-called-interactively-p 'interactive)))))
+  (cond
+   ((not auto-highlight-symbol-mode)
+    (ahs-log 'error-ahs-disable))
+   ((or  buffer-read-only)
+    (ahs-log 'error-read-only (buffer-name)))
+   ((not ahs-highlighted)
+    (ahs-log 'no-symbol-at-point))
+   ((and arg temporary)
+    (ahs-onekey-edit-function 'whole-buffer nil))
+   ((or arg)
+    (ahs-edit-mode-on))
+   ((not arg)
+    (ahs-edit-mode-off nil (ahs-called-interactively-p 'interactive)))
+   (t
+    (error "never reached here."))))
 
 ;;;###autoload
 (define-global-minor-mode global-auto-highlight-symbol-mode
@@ -1288,6 +1296,6 @@ Limitation:
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 114:f98adacb6042 2010-11-10 12:20 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 115:bad40963963e 2010-11-10 13:34 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
