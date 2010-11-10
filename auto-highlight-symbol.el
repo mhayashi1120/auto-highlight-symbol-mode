@@ -160,9 +160,9 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 115:bad40963963e tip $
+;;   $Revision: 116:9d414a3b8a7f tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Wed, 10 Nov 2010 13:34:13 +0900 $
+;;   $LastModified: Wed, 10 Nov 2010 13:55:50 +0900 $
 ;;
 ;;   $Lastlog: minor change $
 ;;
@@ -233,7 +233,7 @@
     (defmacro ahs-called-interactively-p (&optional arg)
       '(called-interactively-p))))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 115:bad40963963e 2010-11-10 13:34 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 116:9d414a3b8a7f 2010-11-10 13:55 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -1256,10 +1256,10 @@ Limitation:
     (ahs-log 'error-ahs-disable))
    ((or  buffer-read-only)
     (ahs-log 'error-read-only (buffer-name)))
-   ((not ahs-highlighted)
-    (ahs-log 'no-symbol-at-point))
    ((and arg temporary)
     (ahs-onekey-edit-function 'whole-buffer nil))
+   ((not ahs-highlighted)
+    (ahs-log 'no-symbol-at-point))
    ((or arg)
     (ahs-edit-mode-on))
    ((not arg)
@@ -1296,6 +1296,6 @@ Limitation:
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 115:bad40963963e 2010-11-10 13:34 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 116:9d414a3b8a7f 2010-11-10 13:55 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
