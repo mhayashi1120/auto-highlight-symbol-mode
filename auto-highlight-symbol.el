@@ -160,17 +160,18 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 116:9d414a3b8a7f tip $
+;;   $Revision: 118:fc9e637b215d tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Wed, 10 Nov 2010 13:55:50 +0900 $
+;;   $LastModified: Thu, 11 Nov 2010 02:02:27 +0900 $
 ;;
-;;   $Lastlog: minor change $
+;;   $Lastlog: violation 1 $
 ;;
 
 ;;; (@* "Changelog" )
 ;;
 ;; v1.54 beta
 ;;   ** fix font-lock problem in whole-buffer(outside display) - !incomplete! fix soon ... i hope
+;;   ** fix overlay violation in edit mode - !incomplete!
 ;;   ** refactor - more
 ;;   add onekey edit fuction
 ;;   add log function
@@ -233,7 +234,7 @@
     (defmacro ahs-called-interactively-p (&optional arg)
       '(called-interactively-p))))
 
-(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 116:9d414a3b8a7f 2010-11-10 13:55 +0900 arch320 $"
+(defconst ahs-mode-vers "$Id: auto-highlight-symbol.el,v 118:fc9e637b215d 2010-11-11 02:02 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -335,9 +336,9 @@
 
 When the value is
   `open'      Open hidden text permanently.
-  `temporary' Open hidden text. When unhighlight or change plugin, close opened text except selected.
+  `temporary' Open hidden text. When unhighlight or change plugin, close opened texts except selected.
   `immediate' Open hidden text. When leaving opened text, close immediately.
-  `skip'      Skip symbol.
+  `skip'      Select next visible symbol.
 
 Affects only overlay(hidden text) has a property `isearch-open-invisible'."
 
@@ -345,7 +346,7 @@ Affects only overlay(hidden text) has a property `isearch-open-invisible'."
   :type '(choice (symbol :tag "Open hidden text permanently."         open)
                  (symbol :tag "Open hidden text temporary."           temporary)
                  (symbol :tag "Open hidden text only when necessary." immediate)
-                 (symbol :tag "Skip all symbol in hidden text."       skip)))
+                 (symbol :tag "Skip over all symbols in hidden text." skip)))
 
 (defcustom auto-highlight-symbol-mode-hook nil
   "Hook for `auto-highlight-symbol-mode'."
@@ -590,9 +591,6 @@ You can do these operations on One Key!
 (defvar auto-highlight-symbol-mode nil
   "Dummy for suppress bytecompiler warning.")
 
-(defconst ahs-modification-hook-list
-  '( ahs-modification-hook-function ))
-
 (defvar ahs-allowed-command-list
   '( universal-argument
      universal-argument-other-key
@@ -655,7 +653,8 @@ You can do these operations on One Key!
   (message "---- end")
   (ahs-change-range ahs-default-range t)
   (message "Plugin error occurred. see *Messages*. Current plugin has been changed to `%s'."
-           (ahs-current-plugin-prop 'name)))
+           (ahs-current-plugin-prop 'name))
+  nil)
 
 (defun ahs-get-plugin-prop (prop range &optional arg)
   "Return plugin's property value."
@@ -701,8 +700,8 @@ You can do these operations on One Key!
   "Return runnable plugin list in current conditions."
   (let* ((current)
          (available (loop for range  in ahs-range-plugin-list
-                          for entity =  (symbol-value range)
-                          for mode   =  (ahs-get-plugin-prop 'major-mode range)
+                          for entity = (symbol-value range)
+                          for mode   = (ahs-get-plugin-prop 'major-mode range)
 
                           when (equal entity ahs-current-range) do (setq current range)
 
@@ -711,10 +710,10 @@ You can do these operations on One Key!
                                         (memq major-mode mode))
                                    (eq major-mode mode))
                           when (ahs-get-plugin-prop 'condition range)
-                          collect range))
-         (next (cadr (memq current available))))
+                          collect range)))
 	(if getnext
-		(if next next (car available))
+		(or (cadr (memq current available))
+            (car available))
 	  available)))
 
 (defun ahs-change-range-internal (range)
@@ -804,10 +803,10 @@ You can do these operations on One Key!
          (beg (car bounds))
          (end (cdr bounds))
          (symbol (when bounds
-                   (buffer-substring-no-properties beg end))))
-    (when (and bounds
+                   (buffer-substring beg end))))
+    (when (and symbol
                (not (ahs-dropdown-list-p))
-               (not (ahs-inhibit-face-p (get-char-property (point) 'face)))
+               (not (ahs-inhibit-face-p (get-char-property beg 'face)))
                (not (ahs-symbol-p ahs-exclude symbol t))
                (ahs-symbol-p ahs-include symbol))
       (list symbol beg end))))
@@ -831,12 +830,12 @@ You can do these operations on One Key!
          (funcall pred symbol))))
 
 (defun ahs-dropdown-list-p ()
-  "Disable highlighting when expand `dropdown-list'."
+  "Return Non-nil if dropdown-list is expanded."
   (and (featurep 'dropdown-list)
        dropdown-list-overlays))
 
 (defun ahs-inhibit-face-p (face)
-  "Disable highlighting when `FACE' in `ahs-inhibit-face-list'."
+  "Return Non-nil if `FACE' in `ahs-inhibit-face-list'."
   (if (listp face)
       (loop for x in face
             when (memq x ahs-inhibit-face-list)
@@ -890,7 +889,7 @@ You can do these operations on One Key!
     (overlay-put overlay 'face (ahs-current-plugin-prop 'face))
     (mapc (function
            (lambda(hook)
-             (overlay-put overlay hook ahs-modification-hook-list)))
+             (overlay-put overlay hook '(ahs-modification-hook-function))))
           '(modification-hooks insert-in-front-hooks insert-behind-hooks))
     (setq ahs-current-overlay overlay)))
 
@@ -899,19 +898,24 @@ You can do these operations on One Key!
   (delete-overlay ahs-current-overlay)
   (mapc 'delete-overlay ahs-overlay-list)
   (mapc 'ahs-open-necessary-overlay ahs-opened-overlay-list)
-  (setq ahs-highlighted         nil
-        ahs-current-overlay     nil
-        ahs-start-point         nil
+  (setq ahs-current-overlay     nil
+        ahs-highlighted         nil
+        ahs-opened-overlay-list nil
         ahs-overlay-list        nil
-        ahs-opened-overlay-list nil))
+        ahs-start-point         nil))
 
 ;;
 ;; (@* "Edit mode" )
 ;;
 (defun ahs-modification-hook-function (overlay after debut fin &optional length)
   "Overlay's `modification-hook' used in edit mode."
-  (when (and after
-             ahs-edit-mode-enable)
+  (cond
+   ((and (not after)
+         ahs-edit-mode-enable)
+    (unless (ahs-inside-overlay-p overlay)
+       (error "Exit edit mode first!"))) ;; need more
+   ((and after
+         ahs-edit-mode-enable)
     (let ((source (if (overlayp overlay)
                       (buffer-substring-no-properties
                        (overlay-start overlay)
@@ -927,7 +931,10 @@ You can do these operations on One Key!
               (save-excursion
                 (goto-char beg)
                 (insert source)
-                (delete-char len)))))))))
+                (delete-char len))))))))))
+
+(add-to-list 'debug-ignored-errors "^Exit the edit mode first!$")
+
 
 (defun ahs-edit-post-command-hook-function ()
   "`post-command-hook' used in edit mode."
@@ -952,17 +959,6 @@ You can do these operations on One Key!
 
 (defun ahs-edit-mode-off (force interactive)
   "Turn `OFF' edit mode."
-  ;; Fontify edited region remove soon...
-  (mapc (function
-         (lambda (overlay)
-           (let ((beg (overlay-start overlay))
-                 (end (overlay-end overlay)))
-             (when (or (< end (window-start))
-                       (> beg (window-end)))
-               (save-excursion
-                 (font-lock-fontify-region beg end nil)))))) ahs-overlay-list)
-
-  ;; Turn `Off' edit mode
   (setq ahs-edit-mode-enable nil)
   (if (and (not (or force
                     ahs-onekey-range-store))
@@ -1003,7 +999,7 @@ You can do these operations on One Key!
      ;;;;
      ;; Entering edit mode
      ((and (not ahs-onekey-range-store)
-           (eq ahs-current-range (symbol-value range)))
+           (equal ahs-current-range (symbol-value range)))
       ;; No change
       (ahs-clear)
       (when (ahs-idle-function)
@@ -1152,7 +1148,7 @@ You can do these operations on One Key!
   "Go back to the highlighting start point.
 
 Limitation:
- If you change plugin during highlighting can't back."
+ If you change plugin during highlights can't go back."
   (interactive)
   (ahs-select 'ahs-start-point-p))
 
@@ -1160,8 +1156,8 @@ Limitation:
   "Change plugin."
   (interactive)
   (ahs-clear)
-  (if (not range)
-      (setq range (ahs-runnable-plugins t)))
+  (unless range
+    (setq range (ahs-runnable-plugins t)))
 
   (cond ((not (ahs-installed-plugin-p range))
          (ahs-log 'plugin-notplguin range))
@@ -1296,6 +1292,6 @@ Limitation:
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 116:9d414a3b8a7f 2010-11-10 13:55 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 118:fc9e637b215d 2010-11-11 02:02 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
