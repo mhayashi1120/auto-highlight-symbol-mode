@@ -130,16 +130,12 @@
 ;;
 ;;  `ahs-modes'
 ;;    Major modes `auto-highlight-symbol-mode' can run on.
-;;  `ahs-case-fold-search'
-;;    *Non-nil means symbol search ignores case.
 ;;  `ahs-suppress-log'
 ;;    *Non-nil means suppress log message.
 ;;  `ahs-log-echo-area-only'
 ;;    *Non-nil means log doesn't display the `*Messages*' buffer.
 ;;  `ahs-decorate-log'
 ;;    *Non-nil means decorate logs.
-;;  `ahs-face-check-include-overlay'
-;;    *Non-nil means face checks include overlay face.
 ;;  `ahs-default-range'
 ;;    Default Plugin.
 ;;  `ahs-edit-mode-lighter-pair'
@@ -154,14 +150,18 @@
 ;;    Normal hook for run when go out edit mode.
 ;;  `ahs-idle-interval'
 ;;    Number of seconds to wait before highlighting symbol.
-;;  `ahs-inhibit-face-list'
-;;    Face list for inhibit highlighting.
-;;  `ahs-definition-face-list'
-;;    Face list for higilight definition.
+;;  `ahs-case-fold-search'
+;;    *Non-nil means symbol search ignores case.
 ;;  `ahs-include'
 ;;    Variable for start highlighting.
 ;;  `ahs-exclude'
 ;;    Variable for inhibit highlighting.
+;;  `ahs-face-check-include-overlay'
+;;    *Non-nil means face checks include overlay face.
+;;  `ahs-inhibit-face-list'
+;;    Face list for inhibit highlighting.
+;;  `ahs-definition-face-list'
+;;    Face list for higilight definition.
 ;;  `ahs-plugin-bod-modes'
 ;;    Major modes `beginning of defun' plugin can run on.
 ;;  `ahs-plugin-bod-function'
@@ -173,11 +173,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 220:0449f92f1180 tip $
+;;   $Revision: 222:a38abb2294cd tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Thu, 18 Nov 2010 23:06:26 +0900 $
+;;   $LastModified: Fri, 19 Nov 2010 02:53:22 +0900 $
 ;;
-;;   $Lastlog: fix compat $
+;;   $Lastlog: fix bounds $
 ;;
 
 ;;; (@* "Changelog" )
@@ -227,7 +227,7 @@
 ;;
 ;;  fix overlay violation problem
 ;;  fix poor doc
-;;  font lock tweak
+;;  face check tweak
 ;;  add onekey-***
 ;;  refactor
 ;;  cleanup
@@ -253,7 +253,7 @@
       '(called-interactively-p))))
 
 (defconst ahs-mode-vers
-  "$Id: auto-highlight-symbol.el,v 220:0449f92f1180 2010-11-18 23:06 +0900 arch320 $"
+  "$Id: auto-highlight-symbol.el,v 222:a38abb2294cd 2010-11-19 02:53 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -308,11 +308,6 @@
   :group 'auto-highlight-symbol
   :type '(repeat symbol))
 
-(defcustom ahs-case-fold-search t
-  "*Non-nil means symbol search ignores case."
-  :group 'auto-highlight-symbol
-  :type 'boolean)
-
 (defcustom ahs-suppress-log nil
   "*Non-nil means suppress log message."
   :group 'auto-highlight-symbol
@@ -325,11 +320,6 @@
 
 (defcustom ahs-decorate-log t
   "*Non-nil means decorate logs."
-  :group 'auto-highlight-symbol
-  :type 'boolean)
-
-(defcustom ahs-face-check-include-overlay nil
-  "*Non-nil means face checks include overlay face."
   :group 'auto-highlight-symbol
   :type 'boolean)
 
@@ -396,23 +386,6 @@ Affects only overlay(hidden text) has a property `isearch-open-invisible'."
 ;;
 ;; (@* "Face" )
 ;;
-(defcustom ahs-inhibit-face-list
-  '( font-lock-comment-delimiter-face
-     font-lock-comment-face
-     font-lock-doc-face
-     font-lock-doc-string-face
-     font-lock-string-face )
-  "Face list for inhibit highlighting."
-  :group 'auto-highlight-symbol
-  :type '(repeat symbol))
-
-(defcustom ahs-definition-face-list
-  '( font-lock-function-name-face
-     font-lock-variable-name-face )
-  "Face list for higilight definition."
-  :group 'auto-highlight-symbol
-  :type  '(repeat symbol))
-
 (defface ahs-face
   '((t (:foreground "GhostWhite" :background "LightYellow4")))
   "Highlight the symbol using this face."
@@ -458,6 +431,11 @@ Affects only overlay(hidden text) has a property `isearch-open-invisible'."
 ;;
 ;; (@* "Highlight Rules" )
 ;;
+(defcustom ahs-case-fold-search t
+  "*Non-nil means symbol search ignores case."
+  :group 'auto-highlight-symbol
+  :type 'boolean)
+
 (defconst ahs-default-symbol-regexp "^[0-9A-Za-z/_.,:;*+=&%|$#@!^?-]+$"
   "Default symbol regular expression.")
 
@@ -509,6 +487,28 @@ This variable can be set in three different types.
                  (regexp :tag "Regexp" "")
                  (symbol :tag "Function" function)
                  (alist  :tag "alist")))
+
+(defcustom ahs-face-check-include-overlay nil
+  "*Non-nil means face checks include overlay face."
+  :group 'auto-highlight-symbol
+  :type 'boolean)
+
+(defcustom ahs-inhibit-face-list
+  '( font-lock-comment-delimiter-face
+     font-lock-comment-face
+     font-lock-doc-face
+     font-lock-doc-string-face
+     font-lock-string-face )
+  "Face list for inhibit highlighting."
+  :group 'auto-highlight-symbol
+  :type '(repeat symbol))
+
+(defcustom ahs-definition-face-list
+  '( font-lock-function-name-face
+     font-lock-variable-name-face )
+  "Face list for higilight definition."
+  :group 'auto-highlight-symbol
+  :type  '(repeat symbol))
 
 ;;
 ;; (@* "Mode map" )
@@ -913,7 +913,8 @@ You can do these operations at One Key!
   (let* ((bounds (bounds-of-thing-at-point 'symbol))
          (beg (car bounds))
          (end (cdr bounds))
-         (face (get-text-property beg 'face))
+         (face (when bounds
+                 (get-text-property beg 'face)))
          (symbol (when bounds
                    (buffer-substring beg end))))
     (when (and symbol
@@ -1556,6 +1557,6 @@ That's all."
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 220:0449f92f1180 2010-11-18 23:06 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 222:a38abb2294cd 2010-11-19 02:53 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
