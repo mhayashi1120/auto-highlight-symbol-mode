@@ -173,11 +173,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 231:15309ceed94a tip $
+;;   $Revision: 232:b540b4273fae tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sat, 20 Nov 2010 08:40:31 +0900 $
+;;   $LastModified: Sat, 20 Nov 2010 21:40:15 +0900 $
 ;;
-;;   $Lastlog: cosmetics $
+;;   $Lastlog: add modification flag $
 ;;
 
 ;;; (@* "Changelog" )
@@ -253,7 +253,7 @@
       '(called-interactively-p))))
 
 (defconst ahs-mode-vers
-  "$Id: auto-highlight-symbol.el,v 231:15309ceed94a 2010-11-20 08:40 +0900 arch320 $"
+  "$Id: auto-highlight-symbol.el,v 232:b540b4273fae 2010-11-20 21:40 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -575,6 +575,7 @@ You can do these operations at One Key!
 (defvar auto-highlight-symbol-mode nil
   "Dummy for suppress bytecompiler warning.")
 
+(defvar ahs-start-modification nil)
 (defvar ahs-inhibit-modification nil)
 (defvar ahs-inhibit-modification-commands
   '( undo
@@ -1096,7 +1097,9 @@ You can do these operations at One Key!
          ahs-edit-mode-enable)
     (setq ahs-inhibit-modification
           (memq this-command
-                ahs-inhibit-modification-commands)))))
+                ahs-inhibit-modification-commands)))
+   (after
+    (setq ahs-start-modification t))))
 
 (defun ahs-edit-post-command-hook-function ()
   "`post-command-hook' used in edit mode."
@@ -1106,7 +1109,8 @@ You can do these operations at One Key!
     (ahs-edit-mode-off nil nil))
 
    ;; Modify!!
-   ((not ahs-inhibit-modification)
+   ((and ahs-start-modification
+         (not ahs-inhibit-modification))
     (ahs-symbol-modification))))
 
 (defun ahs-symbol-modification ()
@@ -1124,7 +1128,8 @@ You can do these operations at One Key!
             (save-excursion
               (goto-char beg)
               (insert source)
-              (delete-region (point) (+ len (point))))))))))
+              (delete-region (point) (+ len (point)))))))))
+  (setq ahs-start-modification nil))
 
 (defun ahs-edit-mode-on ()
   "Turn `ON' edit mode."
@@ -1559,6 +1564,6 @@ That's all."
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 231:15309ceed94a 2010-11-20 08:40 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 232:b540b4273fae 2010-11-20 21:40 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
