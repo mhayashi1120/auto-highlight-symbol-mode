@@ -173,11 +173,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 233:59bb21664fe9 tip $
+;;   $Revision: 237:1b1681235540 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sat, 20 Nov 2010 22:07:59 +0900 $
+;;   $LastModified: Sun, 21 Nov 2010 05:18:43 +0900 $
 ;;
-;;   $Lastlog: add buffer local variable $
+;;   $Lastlog: undo tweak $
 ;;
 
 ;;; (@* "Changelog" )
@@ -253,7 +253,7 @@
       '(called-interactively-p))))
 
 (defconst ahs-mode-vers
-  "$Id: auto-highlight-symbol.el,v 233:59bb21664fe9 2010-11-20 22:07 +0900 arch320 $"
+  "$Id: auto-highlight-symbol.el,v 237:1b1681235540 2010-11-21 05:18 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -665,8 +665,9 @@ You can do these operations at One Key!
   "Display log."
   (unless ahs-suppress-log
     (let* ((data (ahs-log-format key))
-           (msg  (apply 'format data args))
-           (message-log-max (not ahs-log-echo-area-only)))
+           (msg (apply 'format data args))
+           (message-log-max
+            (not ahs-log-echo-area-only)))
       (message "%s" msg))) nil)
 
 ;;
@@ -1094,15 +1095,14 @@ You can do these operations at One Key!
 ;;
 (defun ahs-modification-hook (overlay after debut fin &optional length)
   "Overlay's `modification-hook' used in edit mode."
-  (cond
-   ((and (not after)
-         ahs-edit-mode-enable)
-    (setq ahs-inhibit-modification
-          (memq this-command
-                ahs-inhibit-modification-commands)))
-   ((and after
-         ahs-edit-mode-enable)
-    (setq ahs-start-modification t))))
+  (when ahs-edit-mode-enable
+    (cond
+     ((not after)
+      (setq ahs-inhibit-modification
+            (memq this-command
+                  ahs-inhibit-modification-commands)))
+     (after
+      (setq ahs-start-modification t)))))
 
 (defun ahs-edit-post-command-hook-function ()
   "`post-command-hook' used in edit mode."
@@ -1114,7 +1114,10 @@ You can do these operations at One Key!
    ;; Modify!!
    ((and ahs-start-modification
          (not ahs-inhibit-modification))
-    (ahs-symbol-modification))))
+    (ahs-symbol-modification)))
+
+  (setq ahs-start-modification   nil
+        ahs-inhibit-modification nil))
 
 (defun ahs-symbol-modification ()
   "Modify all highlighted symbols."
@@ -1131,28 +1134,31 @@ You can do these operations at One Key!
             (save-excursion
               (goto-char beg)
               (insert source)
-              (delete-region (point) (+ len (point)))))))))
-  (setq ahs-start-modification nil))
+              (delete-region (point) (+ len (point))))))))))
 
 (defun ahs-edit-mode-on ()
   "Turn `ON' edit mode."
-  (setq ahs-edit-mode-enable     t)
-  (setq ahs-start-modification   nil)
-  (setq ahs-inhibit-modification nil)
+  (setq ahs-edit-mode-enable     t
+        ahs-start-modification   nil
+        ahs-inhibit-modification nil)
   (overlay-put ahs-current-overlay 'face ahs-edit-mode-face)
   (remove-hook 'pre-command-hook 'ahs-unhighlight t)
   (add-hook 'post-command-hook 'ahs-edit-post-command-hook-function nil t)
   (run-hooks 'ahs-edit-mode-on-hook)
 
+  ;; Exit edit mode when undo over edit mode.
+  (push '(apply ahs-clear t) buffer-undo-list)
+
   ;; Display log
   (unless ahs-suppress-log
     (let* ((st (ahs-stat))
-           (alert (if (ahs-stat-alert-p st)
-                      (format (ahs-log-format 'exist-elsewhere)
-                              (ahs-decorate-if
-                               (number-to-string
-                                (+ (nth 2 st)
-                                   (nth 3 st))) ahs-warning-face)) "")))
+           (alert
+            (if (ahs-stat-alert-p st)
+                (format (ahs-log-format 'exist-elsewhere)
+                        (ahs-decorate-if
+                         (number-to-string
+                          (+ (nth 2 st)
+                             (nth 3 st))) ahs-warning-face)) "")))
       (if ahs-onekey-range-store
           (ahs-log 'onekey-turn-on-edit-mode
                    (ahs-decorated-current-plugin-name) alert)
@@ -1160,12 +1166,11 @@ You can do these operations at One Key!
 
   (ahs-set-lighter))
 
-(defun ahs-edit-mode-off (force interactive)
+(defun ahs-edit-mode-off (nomsg interactive)
   "Turn `OFF' edit mode."
   (setq ahs-edit-mode-enable nil)
   (if (and interactive
-           (not (or force
-                    ahs-onekey-range-store))
+           (not ahs-onekey-range-store)
            (ahs-inside-overlay-p ahs-current-overlay))
       (progn
         (overlay-put ahs-current-overlay 'face (ahs-current-plugin-prop 'face))
@@ -1174,11 +1179,13 @@ You can do these operations at One Key!
   (remove-hook 'post-command-hook 'ahs-edit-post-command-hook-function t)
   (run-hooks 'ahs-edit-mode-off-hook)
 
-  ;; Restore plugin
+  ;; Display log
   (let ((ahs-suppress-log
-         (or force ahs-suppress-log)))
+         (or nomsg
+             ahs-suppress-log)))
     (if (not ahs-onekey-range-store)
         (ahs-log 'turn-off-edit-mode)
+      ;; Restore plugin
       (ahs-change-range-internal 'ahs-onekey-range-store)
       (ahs-log 'onekey-turn-off-edit-mode
                (ahs-decorated-current-plugin-name))
@@ -1208,14 +1215,14 @@ You can do these operations at One Key!
      ((and (not ahs-onekey-range-store)
            (equal ahs-current-range (symbol-value range)))
       ;; No change.
-      (ahs-clear)
+      (ahs-clear t)
       (if (ahs-idle-function)
           (ahs-edit-mode-on)
         (ahs-log 'no-symbol-at-point)))
 
      (t
       ;; Change plugin temporary.
-      (ahs-clear)
+      (ahs-clear t)
       (setq ahs-onekey-range-store ahs-current-range)
       (ahs-change-range-internal range)
       (if (ahs-idle-function)
@@ -1416,10 +1423,10 @@ You can do these operations at One Key!
   (ahs-set-lighter)
   (ahs-start-timer))
 
-(defun ahs-clear ()
+(defun ahs-clear (&optional verbose)
   "Remove all overlays and exit edit mode."
   (if ahs-edit-mode-enable
-      (ahs-edit-mode-off t nil)
+      (ahs-edit-mode-off (not verbose) nil)
     (when ahs-highlighted
       (ahs-unhighlight t))))
 
@@ -1463,7 +1470,7 @@ Limitation:
 (defun ahs-change-range (&optional range nomsg)
   "Current plugin change to `RANGE' plugin. `RANGE' defaults to next runnable plugin."
   (interactive)
-  (ahs-clear)
+  (ahs-clear t)
 
   (when (if range
             (ahs-valid-plugin-p range)
@@ -1569,6 +1576,6 @@ That's all."
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 233:59bb21664fe9 2010-11-20 22:07 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 237:1b1681235540 2010-11-21 05:18 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
