@@ -173,11 +173,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 237:1b1681235540 tip $
+;;   $Revision: 239:394da827a862 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sun, 21 Nov 2010 05:18:43 +0900 $
+;;   $LastModified: Sun, 21 Nov 2010 05:45:03 +0900 $
 ;;
-;;   $Lastlog: undo tweak $
+;;   $Lastlog: minor fix $
 ;;
 
 ;;; (@* "Changelog" )
@@ -253,7 +253,7 @@
       '(called-interactively-p))))
 
 (defconst ahs-mode-vers
-  "$Id: auto-highlight-symbol.el,v 237:1b1681235540 2010-11-21 05:18 +0900 arch320 $"
+  "$Id: auto-highlight-symbol.el,v 239:394da827a862 2010-11-21 05:45 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -1096,13 +1096,11 @@ You can do these operations at One Key!
 (defun ahs-modification-hook (overlay after debut fin &optional length)
   "Overlay's `modification-hook' used in edit mode."
   (when ahs-edit-mode-enable
-    (cond
-     ((not after)
-      (setq ahs-inhibit-modification
-            (memq this-command
-                  ahs-inhibit-modification-commands)))
-     (after
-      (setq ahs-start-modification t)))))
+    (if (not after)
+        (setq ahs-inhibit-modification
+              (memq this-command
+                    ahs-inhibit-modification-commands))
+      (setq ahs-start-modification t))))
 
 (defun ahs-edit-post-command-hook-function ()
   "`post-command-hook' used in edit mode."
@@ -1351,8 +1349,8 @@ You can do these operations at One Key!
 ;;
 (defun ahs-stat ()
   "Return list of the current status."
-  (append (list (ahs-decorated-current-plugin-name))
-          (list (length ahs-overlay-list))
+  (append (list (ahs-decorated-current-plugin-name)
+                (length ahs-overlay-list))
 
           (loop with hidden?   = 0
                 with before    = 0
@@ -1470,7 +1468,7 @@ Limitation:
 (defun ahs-change-range (&optional range nomsg)
   "Current plugin change to `RANGE' plugin. `RANGE' defaults to next runnable plugin."
   (interactive)
-  (ahs-clear t)
+  (ahs-clear (not nomsg))
 
   (when (if range
             (ahs-valid-plugin-p range)
@@ -1576,6 +1574,6 @@ That's all."
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 237:1b1681235540 2010-11-21 05:18 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 239:394da827a862 2010-11-21 05:45 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
