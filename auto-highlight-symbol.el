@@ -173,11 +173,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 232:b540b4273fae tip $
+;;   $Revision: 233:59bb21664fe9 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sat, 20 Nov 2010 21:40:15 +0900 $
+;;   $LastModified: Sat, 20 Nov 2010 22:07:59 +0900 $
 ;;
-;;   $Lastlog: add modification flag $
+;;   $Lastlog: add buffer local variable $
 ;;
 
 ;;; (@* "Changelog" )
@@ -253,7 +253,7 @@
       '(called-interactively-p))))
 
 (defconst ahs-mode-vers
-  "$Id: auto-highlight-symbol.el,v 232:b540b4273fae 2010-11-20 21:40 +0900 arch320 $"
+  "$Id: auto-highlight-symbol.el,v 233:59bb21664fe9 2010-11-20 22:07 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -575,8 +575,6 @@ You can do these operations at One Key!
 (defvar auto-highlight-symbol-mode nil
   "Dummy for suppress bytecompiler warning.")
 
-(defvar ahs-start-modification nil)
-(defvar ahs-inhibit-modification nil)
 (defvar ahs-inhibit-modification-commands
   '( undo
      redo ))
@@ -596,25 +594,29 @@ You can do these operations at One Key!
   "List of installed plugin.")
 
 ;; buffer local variable
-(defvar ahs-current-overlay     nil)
-(defvar ahs-current-range       nil)
-(defvar ahs-edit-mode-enable    nil)
-(defvar ahs-highlighted         nil)
-(defvar ahs-mode-line           nil)
-(defvar ahs-onekey-range-store  nil)
-(defvar ahs-opened-overlay-list nil)
-(defvar ahs-overlay-list        nil)
-(defvar ahs-start-point         nil)
+(defvar ahs-current-overlay      nil)
+(defvar ahs-current-range        nil)
+(defvar ahs-edit-mode-enable     nil)
+(defvar ahs-highlighted          nil)
+(defvar ahs-inhibit-modification nil)
+(defvar ahs-mode-line            nil)
+(defvar ahs-onekey-range-store   nil)
+(defvar ahs-opened-overlay-list  nil)
+(defvar ahs-overlay-list         nil)
+(defvar ahs-start-modification   nil)
+(defvar ahs-start-point          nil)
 
-(make-variable-buffer-local 'ahs-current-overlay     )
-(make-variable-buffer-local 'ahs-current-range       )
-(make-variable-buffer-local 'ahs-edit-mode-enable    )
-(make-variable-buffer-local 'ahs-highlighted         )
-(make-variable-buffer-local 'ahs-mode-line           )
-(make-variable-buffer-local 'ahs-onekey-range-store  )
-(make-variable-buffer-local 'ahs-opened-overlay-list )
-(make-variable-buffer-local 'ahs-overlay-list        )
-(make-variable-buffer-local 'ahs-start-point         )
+(make-variable-buffer-local 'ahs-current-overlay      )
+(make-variable-buffer-local 'ahs-current-range        )
+(make-variable-buffer-local 'ahs-edit-mode-enable     )
+(make-variable-buffer-local 'ahs-highlighted          )
+(make-variable-buffer-local 'ahs-inhibit-modification )
+(make-variable-buffer-local 'ahs-mode-line            )
+(make-variable-buffer-local 'ahs-onekey-range-store   )
+(make-variable-buffer-local 'ahs-opened-overlay-list  )
+(make-variable-buffer-local 'ahs-overlay-list         )
+(make-variable-buffer-local 'ahs-start-modification   )
+(make-variable-buffer-local 'ahs-start-point          )
 
 ;;
 ;; (@* "Logging" )
@@ -1098,7 +1100,8 @@ You can do these operations at One Key!
     (setq ahs-inhibit-modification
           (memq this-command
                 ahs-inhibit-modification-commands)))
-   (after
+   ((and after
+         ahs-edit-mode-enable)
     (setq ahs-start-modification t))))
 
 (defun ahs-edit-post-command-hook-function ()
@@ -1133,7 +1136,9 @@ You can do these operations at One Key!
 
 (defun ahs-edit-mode-on ()
   "Turn `ON' edit mode."
-  (setq ahs-edit-mode-enable t)
+  (setq ahs-edit-mode-enable     t)
+  (setq ahs-start-modification   nil)
+  (setq ahs-inhibit-modification nil)
   (overlay-put ahs-current-overlay 'face ahs-edit-mode-face)
   (remove-hook 'pre-command-hook 'ahs-unhighlight t)
   (add-hook 'post-command-hook 'ahs-edit-post-command-hook-function nil t)
@@ -1564,6 +1569,6 @@ That's all."
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 232:b540b4273fae 2010-11-20 21:40 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 233:59bb21664fe9 2010-11-20 22:07 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
