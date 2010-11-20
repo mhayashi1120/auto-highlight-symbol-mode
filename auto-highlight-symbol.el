@@ -41,8 +41,6 @@
 ;; (@> "Screencast")         Screencast
 ;; (@> "Mode map")           Key binding
 ;;
-;; (@> "Note")               Performance note
-;;
 ;; (@> "Custom variable")    Customizable varible
 ;; (@> "Face")               Face used in auto-highlight-symbol-mode
 ;; (@> "Highlight Rules")    Whether to highlight the symbol.
@@ -173,11 +171,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 239:394da827a862 tip $
+;;   $Revision: 241:c70529cd7f01 tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sun, 21 Nov 2010 05:45:03 +0900 $
+;;   $LastModified: Sun, 21 Nov 2010 07:50:34 +0900 $
 ;;
-;;   $Lastlog: minor fix $
+;;   $Lastlog: font lock orz... $
 ;;
 
 ;;; (@* "Changelog" )
@@ -253,7 +251,7 @@
       '(called-interactively-p))))
 
 (defconst ahs-mode-vers
-  "$Id: auto-highlight-symbol.el,v 239:394da827a862 2010-11-21 05:45 +0900 arch320 $"
+  "$Id: auto-highlight-symbol.el,v 241:c70529cd7f01 2010-11-21 07:50 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -1008,35 +1006,11 @@ You can do these operations at One Key!
                    (face (cadr (memq 'face tprop)))
                    (fontified (cadr (memq 'fontified tprop)))
                    (overlay))
-              ;;;;
-              ;;
-              ;; (@* "Note" )
-              ;;
-              ;;  If symbol has no text properties, will be called `font-lock-fontify-region'
-              ;; to strict check.
-              ;;
-              ;; Some old PCs performance may be degraded when:
-              ;;  * Editing large file.
-              ;;  * So many matched symbols exists outside the display area.
-              ;;
-              ;; Tested on my old pentium4 pc (bought in 2002 xD)
-              ;;  So dirty `font-lock-keywords' and use `whole buffer' plugin.
-              ;; Result:
-              ;;  +---------------+-----------+----------------+----------+
-              ;;  | filename      | filesize  | matched symbol | result   |
-              ;;  +---------------+-----------+----------------+----------+
-              ;;  | `loaddefs.el' | 1,207,715 | `autoload'     | so slow  |
-              ;;  | `org.el'      |   753,991 | `if'           | slow     |
-              ;;  +---------------+-----------+----------------+----------+
-              ;;
-              ;; If you feel slow, please use `display area' plugin instead of `whole buffer' plugin.
-              ;; And use `ahs-onekey-edit' to use `whole buffer' plugin.
-              ;;
-              (unless (or face fontified)
-                (save-excursion
-                    (font-lock-fontify-region symbol-start symbol-end))
-                (setq face (get-text-property symbol-start 'face)))
 
+              ;;  If symbol has no text properties, will be called `jit-lock-fontify-now'
+              (unless (or face fontified)
+                (jit-lock-fontify-now)
+                (setq face (get-text-property symbol-start 'face)))
 
               ;; Overlay check
               (setq face (ahs-add-overlay-face symbol-start face))
@@ -1574,6 +1548,6 @@ That's all."
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 239:394da827a862 2010-11-21 05:45 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 241:c70529cd7f01 2010-11-21 07:50 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
