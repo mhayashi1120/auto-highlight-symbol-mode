@@ -41,6 +41,8 @@
 ;; (@> "Screencast")         Screencast
 ;; (@> "Mode map")           Key binding
 ;;
+;; (@> "Note")               Performance note
+;;
 ;; (@> "Custom variable")    Customizable varible
 ;; (@> "Face")               Face used in auto-highlight-symbol-mode
 ;; (@> "Highlight Rules")    Whether to highlight the symbol.
@@ -171,11 +173,11 @@
 
 ;;; SCM Log
 ;;
-;;   $Revision: 241:c70529cd7f01 tip $
+;;   $Revision: 243:6aa59061b1df tip $
 ;;   $Commiter: Mitso Saito <arch320@NOSPAM.gmail.com> $
-;;   $LastModified: Sun, 21 Nov 2010 07:50:34 +0900 $
+;;   $LastModified: Sun, 21 Nov 2010 14:42:11 +0900 $
 ;;
-;;   $Lastlog: font lock orz... $
+;;   $Lastlog: font lock again $
 ;;
 
 ;;; (@* "Changelog" )
@@ -251,7 +253,7 @@
       '(called-interactively-p))))
 
 (defconst ahs-mode-vers
-  "$Id: auto-highlight-symbol.el,v 241:c70529cd7f01 2010-11-21 07:50 +0900 arch320 $"
+  "$Id: auto-highlight-symbol.el,v 243:6aa59061b1df 2010-11-21 14:42 +0900 arch320 $"
   "auto-highlight-symbol-mode version.")
 
 ;;
@@ -591,7 +593,10 @@ You can do these operations at One Key!
 (defvar ahs-range-plugin-list nil
   "List of installed plugin.")
 
-;; buffer local variable
+(defvar ahs-search-work  nil)
+(defvar ahs-need-fontify nil)
+
+;; Buffer local variable
 (defvar ahs-current-overlay      nil)
 (defvar ahs-current-range        nil)
 (defvar ahs-edit-mode-enable     nil)
@@ -987,48 +992,121 @@ You can do these operations at One Key!
 ;;
 ;; (@* "Highlight" )
 ;;
+(defun ahs-prepare-highlight (symbol)
+  "Prepare for highlight."
+  (let ((before (ahs-current-plugin-prop 'before-search symbol))
+        (beg (ahs-current-plugin-prop 'start))
+        (end (ahs-current-plugin-prop 'end)))
+    (cond ((equal before 'abort) nil)
+          ((not (numberp beg)) nil)
+          ((not (numberp end)) nil)
+          ((> beg end) nil)
+          (t (cons beg end)))))
+
+(defun ahs-search-symbol (symbol search-range)
+  "Search `SYMBOL' in `SEARCH-RANGE'."
+  (save-excursion
+    (let ((case-fold-search ahs-case-fold-search)
+          (regexp (concat "\\_<\\(" (regexp-quote symbol) "\\)\\_>" ))
+          (beg (car search-range))
+          (end (cdr search-range)))
+      (goto-char end)
+      (while (re-search-backward regexp beg t)
+        (let* ((symbol-beg (match-beginning 1))
+               (symbol-end (match-end 1))
+               (tprop (text-properties-at symbol-beg))
+               (face (cadr (memq 'face tprop)))
+               (fontified (cadr (memq 'fontified tprop))))
+          (unless (or face fontified)
+            (setq ahs-need-fontify t))
+          (push (list symbol-beg
+                      symbol-end
+                      face fontified) ahs-search-work))))))
+
+(defun ahs-fontify ()
+  "Fontify symbols for strict check."
+  ;;;;
+  ;;
+  ;; (@* "Note" )
+  ;;
+  ;;  If symbol has no text properties, will be called `jit-lock-fontify-now'
+  ;; to strict check.
+  ;;
+  ;; Some old PCs performance may be degraded when:
+  ;;  * Editing large file.
+  ;;  * So many matched symbols exists outside the display area.
+  ;;
+  ;; Tested on my old pentium4 pc (bought in 2002 xD)
+  ;;  So dirty `font-lock-keywords' and use `whole buffer' plugin.
+  ;; Result:
+  ;;  +---------------+-----------+----------------+----------+
+  ;;  | filename      | filesize  | matched symbol | result   |
+  ;;  +---------------+-----------+----------------+----------+
+  ;;  | `loaddefs.el' | 1,207,715 | `autoload'     | so slow  |
+  ;;  | `org.el'      |   753,991 | `if'           | slow     |
+  ;;  +---------------+-----------+----------------+----------+
+  ;;
+  ;; If you feel slow, please use `display area' plugin instead of `whole buffer' plugin.
+  ;; And use `ahs-onekey-edit' to use `whole buffer' plugin.
+  ;;
+  (loop with beg = nil
+        with end = nil
+
+        for symbol in ahs-search-work
+        for fontified = (or (nth 2 symbol)
+                            (nth 3 symbol))
+
+        unless (or beg fontified) do (setq beg (nth 0 symbol))
+        unless fontified          do (setq end (nth 1 symbol))
+
+        when (and beg end fontified)
+        do (progn
+             (jit-lock-fontify-now beg end)
+             (setq beg nil
+                   end nil))
+
+        finally
+        do (when (and beg end)
+             (jit-lock-fontify-now beg end))))
+
+(defun ahs-light-up ()
+  "Light up symbols."
+  (loop for symbol in ahs-search-work
+
+        for beg  = (nth 0 symbol)
+        for end  = (nth 1 symbol)
+        for face = (or (nth 2 symbol)
+                       (get-text-property beg 'face))
+        for face = (ahs-add-overlay-face beg face)
+
+        unless (ahs-face-p face 'ahs-inhibit-face-list)
+        do (let ((overlay (make-overlay beg end nil nil t)))
+             (overlay-put overlay 'ahs-symbol t)
+             (overlay-put overlay 'face
+                          (if (ahs-face-p face 'ahs-definition-face-list)
+                              ahs-definition-face
+                            ahs-face))
+             (push overlay ahs-overlay-list))))
+
 (defun ahs-highlight (symbol beg end)
-  "Highlight Core"
-  (if (equal 'abort (ahs-current-plugin-prop 'before-search symbol))
-      nil
-    (save-excursion
-      (let ((case-fold-search ahs-case-fold-search)
-            (regexp (concat "\\_<\\(" (regexp-quote symbol) "\\)\\_>" ))
-            (range-start (ahs-current-plugin-prop 'start))
-            (range-end (ahs-current-plugin-prop 'end)))
-        (when (and (numberp range-start)
-                   (numberp range-end))
-          (goto-char range-start)
-          (while (re-search-forward regexp range-end t)
-            (let* ((symbol-start (match-beginning 1))
-                   (symbol-end (match-end 1))
-                   (tprop (text-properties-at symbol-start))
-                   (face (cadr (memq 'face tprop)))
-                   (fontified (cadr (memq 'fontified tprop)))
-                   (overlay))
-
-              ;;  If symbol has no text properties, will be called `jit-lock-fontify-now'
-              (unless (or face fontified)
-                (jit-lock-fontify-now)
-                (setq face (get-text-property symbol-start 'face)))
-
-              ;; Overlay check
-              (setq face (ahs-add-overlay-face symbol-start face))
-
-              ;; Light up!!
-              (unless (ahs-face-p face 'ahs-inhibit-face-list)
-                (setq overlay (make-overlay symbol-start symbol-end nil nil t))
-                (overlay-put overlay 'ahs-symbol t)
-                (overlay-put overlay 'face
-                             (if (ahs-face-p face 'ahs-definition-face-list)
-                                 ahs-definition-face
-                               ahs-face))
-                (push overlay ahs-overlay-list)))))))
-    (when ahs-overlay-list
-      (ahs-highlight-current-symbol beg end)
-      (setq ahs-start-point beg)
-      (setq ahs-highlighted t)
-      (add-hook 'pre-command-hook 'ahs-unhighlight nil t) t)))
+  "Highlight"
+  (setq ahs-search-work  nil
+        ahs-need-fontify nil)
+  (let ((search-range (ahs-prepare-highlight symbol)))
+    (when (consp search-range)
+      ;;(msell-bench
+       (ahs-search-symbol symbol search-range)
+       (when ahs-need-fontify
+         (ahs-fontify))
+       (ahs-light-up)
+      ;;)
+      (when ahs-overlay-list
+        (ahs-highlight-current-symbol beg end)
+        (setq ahs-highlighted  t
+              ahs-start-point  beg
+              ahs-search-work  nil
+              ahs-need-fontify nil)
+        (add-hook 'pre-command-hook 'ahs-unhighlight nil t) t))))
 
 (defun ahs-unhighlight (&optional force)
   "Unhighlight"
@@ -1548,6 +1626,6 @@ That's all."
 ;;; End:
 
 ;;
-;; $Id: auto-highlight-symbol.el,v 241:c70529cd7f01 2010-11-21 07:50 +0900 arch320 $
+;; $Id: auto-highlight-symbol.el,v 243:6aa59061b1df 2010-11-21 14:42 +0900 arch320 $
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auto-highlight-symbol.el ends here
