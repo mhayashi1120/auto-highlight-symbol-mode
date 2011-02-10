@@ -436,7 +436,7 @@ Affects only overlay(hidden text) has a property `isearch-open-invisible'."
   :group 'auto-highlight-symbol
   :type 'boolean)
 
-(defconst ahs-default-symbol-regexp "^[0-9A-Za-z/_.,:;*+=&%|$#@!^?-]+$"
+(defconst ahs-default-symbol-regexp "\\(?:\\s_\\|\\sw\\)+$"
   "Default symbol regular expression.")
 
 (defcustom ahs-include ahs-default-symbol-regexp
@@ -524,9 +524,9 @@ This variable can be set in three different types.
           (define-key map (kbd "M-<right>"   ) 'ahs-forward             )
           (define-key map (kbd "M-S-<left>"  ) 'ahs-backward-definition )
           (define-key map (kbd "M-S-<right>" ) 'ahs-forward-definition  )
-          (define-key map (kbd "M--"         ) 'ahs-back-to-start       )
-          (define-key map (kbd "C-x C-'"     ) 'ahs-change-range        )
-          (define-key map (kbd "C-x C-a"     ) 'ahs-edit-mode           )
+          ;; (define-key map (kbd "M--"         ) 'ahs-back-to-start       )
+          ;; (define-key map (kbd "C-x C-'"     ) 'ahs-change-range        )
+          ;; (define-key map (kbd "C-x C-a"     ) 'ahs-edit-mode           )
           map)))
 
 (defmacro ahs-onekey-edit (keys plugin-name &optional keep keymap)
@@ -719,9 +719,17 @@ You can do these operations at One Key!
     (cond
      ((equal value 'abort) 'abort)          ;; abort
      ((equal prop 'face)                    ;; face
-      (if (facep value)
-          value
-        ahs-plugin-defalt-face))
+      (cond
+       ((facep value)
+        value)
+       ((functionp value)
+        (condition-case err
+            (funcall value)
+          (error err
+                 (ahs-plugin-error-message err prop range)
+                 'abort)))
+       (t
+        ahs-plugin-defalt-face)))
 
      ((and (functionp value)
            (equal prop 'major-mode)) value) ;; major-mode
@@ -881,16 +889,38 @@ You can do these operations at One Key!
    (lighter       . "HSD")
    (face          . ahs-plugin-bod-face)
    (major-mode    . ahs-plugin-bod-modes)
-   (before-search . (lambda(symbol)
-                      (save-excursion
-                        (let ((pos (funcall ahs-plugin-bod-function)))
-                          (if (not (consp pos))
-                              'abort
-                            (setq ahs-plugin-bod-start (car pos))
-                            (setq ahs-plugin-bod-end   (cdr pos)))))))
+   (before-search . ahs-plugin-set-bod-region)
    (start         . ahs-plugin-bod-start)
    (end           . ahs-plugin-bod-end))
  "beginning-of-defun to end-of-defun.")
+
+(defun ahs-plugin-hybrid-face-function ()
+  (let* ((hl (ahs-highlight-p))
+         (symbol (and hl (nth 0 hl))))
+    (if (and symbol (ahs-symbol-defined-in-this-buffer symbol))
+        ahs-plugin-whole-buffer-face
+      ahs-plugin-bod-face)))
+
+(defun ahs-plugin-set-bod-region (symbol)
+  (save-excursion
+    (let ((pos (funcall ahs-plugin-bod-function)))
+      (if (not (consp pos))
+          'abort
+        (setq ahs-plugin-bod-start (car pos))
+        (setq ahs-plugin-bod-end   (cdr pos))))))
+
+;;FIXME more powerful hybrid plugin
+(ahs-regist-range-plugin
+ hybrid
+ '((name    . "hybrid buffer")
+   (lighter . "HSH")
+   (face    . ahs-plugin-hybrid-face-function)
+   (major-mode    . ahs-plugin-bod-modes)
+   (before-search . ahs-plugin-set-bod-region)
+   (start         . ahs-plugin-bod-start)
+   (end           . ahs-plugin-bod-end))
+ "Highlight whole buffer if symbol defined in this buffer or
+highlight current defun.")
 
 ;;
 ;; (@* "Timer" )
@@ -1022,6 +1052,19 @@ You can do these operations at One Key!
           (push (list symbol-beg
                       symbol-end
                       face fontified) ahs-search-work))))))
+
+(defun ahs-symbol-defined-in-this-buffer (symbol)
+  (save-excursion
+    (let ((case-fold-search ahs-case-fold-search)
+          (regexp (concat "\\_<\\(" (regexp-quote symbol) "\\)\\_>" )))
+      (goto-char (point-min))
+      (catch 'found
+        (while (re-search-forward regexp nil t)
+          ;;FIXME this is bad!! 
+          ;; font-lock is activated only have shown display.
+          (let ((face (get-text-property (1- (point)) 'face)))
+            (when (ahs-face-p face 'ahs-definition-face-list)
+              (throw 'found t))))))))
 
 (defun ahs-fontify ()
   "Fontify symbols for strict check."
