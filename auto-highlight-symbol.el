@@ -308,7 +308,7 @@
   :group 'auto-highlight-symbol
   :type '(repeat symbol))
 
-(defcustom ahs-suppress-log nil
+(defcustom ahs-suppress-log t
   "*Non-nil means suppress log message."
   :group 'auto-highlight-symbol
   :type 'boolean)
