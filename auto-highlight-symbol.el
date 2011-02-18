@@ -431,10 +431,6 @@ Affects only overlay(hidden text) has a property `isearch-open-invisible'."
 ;;
 ;; (@* "Highlight Rules" )
 ;;
-(defcustom ahs-case-fold-search t
-  "*Non-nil means symbol search ignores case."
-  :group 'auto-highlight-symbol
-  :type 'boolean)
 
 (defconst ahs-default-symbol-regexp "\\(?:\\s_\\|\\sw\\)+$"
   "Default symbol regular expression.")
@@ -608,6 +604,8 @@ You can do these operations at One Key!
 (defvar ahs-overlay-list         nil)
 (defvar ahs-start-modification   nil)
 (defvar ahs-start-point          nil)
+(defvar ahs-case-fold-search t
+  "*Non-nil means symbol search ignores case.")
 
 (make-variable-buffer-local 'ahs-current-overlay      )
 (make-variable-buffer-local 'ahs-current-range        )
@@ -620,6 +618,7 @@ You can do these operations at One Key!
 (make-variable-buffer-local 'ahs-overlay-list         )
 (make-variable-buffer-local 'ahs-start-modification   )
 (make-variable-buffer-local 'ahs-start-point          )
+(make-variable-buffer-local 'ahs-case-fold-search     )
 
 ;;
 ;; (@* "Logging" )
@@ -894,12 +893,22 @@ You can do these operations at One Key!
    (end           . ahs-plugin-bod-end))
  "beginning-of-defun to end-of-defun.")
 
+(defvar ahs-plugin-hybrid-defined nil)
 (defun ahs-plugin-hybrid-face-function ()
   (let* ((hl (ahs-highlight-p))
          (symbol (and hl (nth 0 hl))))
-    (if (and symbol (ahs-symbol-defined-in-this-buffer symbol))
+    (if (and symbol ahs-plugin-hybrid-defined)
         ahs-plugin-whole-buffer-face
       ahs-plugin-bod-face)))
+
+(defun ahs-plugin-hybrid-set-bod-region (symbol)
+  (setq ahs-plugin-hybrid-defined 
+        (ahs-symbol-defined-in-this-buffer symbol))
+  (if ahs-plugin-hybrid-defined 
+      (progn
+        (setq ahs-plugin-bod-start (point-min))
+        (setq ahs-plugin-bod-end   (point-max)))
+    (ahs-plugin-set-bod-region symbol)))
 
 (defun ahs-plugin-set-bod-region (symbol)
   (save-excursion
@@ -916,7 +925,7 @@ You can do these operations at One Key!
    (lighter . "HSH")
    (face    . ahs-plugin-hybrid-face-function)
    (major-mode    . ahs-plugin-bod-modes)
-   (before-search . ahs-plugin-set-bod-region)
+   (before-search . ahs-plugin-hybrid-set-bod-region)
    (start         . ahs-plugin-bod-start)
    (end           . ahs-plugin-bod-end))
  "Highlight whole buffer if symbol defined in this buffer or
@@ -1511,6 +1520,7 @@ highlight current defun.")
 
 (defun ahs-init ()
   "Initialize"
+  (setq ahs-case-fold-search font-lock-keywords-case-fold-search)
   (unless ahs-current-range
     (ahs-change-range-internal ahs-default-range))
   (ahs-set-lighter)
