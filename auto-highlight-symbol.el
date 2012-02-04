@@ -954,11 +954,13 @@ highlight current defun.")
   "Idle function. Called by `ahs-idle-timer'."
   (when (and auto-highlight-symbol-mode
              (not ahs-highlighted))
-    (let ((hl (ahs-highlight-p)))
-      (when hl
-        (ahs-highlight (nth 0 hl)
-                       (nth 1 hl)
-                       (nth 2 hl))))))
+    (save-match-data
+      (with-local-quit
+        (let ((hl (ahs-highlight-p)))
+          (when hl
+            (ahs-highlight (nth 0 hl)
+                           (nth 1 hl)
+                           (nth 2 hl))))))))
 
 (defmacro ahs-add-overlay-face (pos face)
   `(if ahs-face-check-include-overlay
